@@ -1,0 +1,370 @@
+/* ==========================================================================
+   Shop: filters, product grid, product cards, garment artwork, pager
+   ========================================================================== */
+
+.shop {
+  padding-block: 28px 72px;
+}
+
+/* ----- Filters ----- */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+/* All / Women / Men segmented control */
+.gender-toggle {
+  display: inline-flex;
+  flex: none;
+  margin-right: 6px;
+  padding: 3px;
+  border: 1.5px solid var(--espresso);
+  border-radius: 99px;
+}
+
+.gender-toggle button {
+  padding: 7px 16px;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gender-toggle button[aria-pressed="true"] {
+  background: var(--terracotta);
+  color: var(--cream);
+}
+
+.category-pill {
+  padding: 10px 20px;
+  border: 1.5px solid var(--espresso);
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.category-pill[aria-pressed="true"] {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+/* ----- Section header ----- */
+
+.shop__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 24px 0 20px;
+}
+
+.shop__header h2 {
+  font-size: clamp(44px, 6vw, 72px);
+}
+
+.shop__count {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----- Grid ----- */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px 22px;
+}
+
+/* ----- Product card ----- */
+
+.product-card {
+  min-width: 0;
+  animation: rise 0.5s ease-out both;
+}
+
+.product-card__image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  max-width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.product-card__image .garment {
+  width: 74%;
+  transition: transform 0.45s var(--ease-out);
+}
+
+.product-card:hover .garment {
+  transform: translateY(-8px) rotate(-3deg);
+}
+
+.product-card__badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  padding: 5px 10px;
+  border-radius: 99px;
+  background: var(--espresso);
+  color: var(--cream);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.product-card__add {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  padding: 9px 15px;
+  border-radius: 99px;
+  background: var(--cream);
+  color: var(--espresso);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(42, 26, 20, 0.15);
+}
+
+.product-card__add:hover {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+.product-card__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.product-card__title h3 {
+  min-width: 0;
+  font-size: 16px;
+}
+
+.product-card__gender {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.product-card__price {
+  margin-top: 2px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----- Colour swatches ----- */
+
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--swatch-color);
+  box-shadow: inset 0 0 0 1px rgba(42, 26, 20, 0.2);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.swatch:hover {
+  transform: scale(1.15);
+}
+
+.swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--cream), 0 0 0 4px var(--espresso);
+}
+
+.swatches__label {
+  margin-left: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ----- Sizes ----- */
+
+.sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.sizes button {
+  min-width: 36px;
+  padding: 5px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sizes button:hover {
+  border-color: var(--espresso);
+}
+
+.sizes button[aria-pressed="true"] {
+  border-color: var(--espresso);
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+/* Out of stock: dashed, faded, struck through diagonally */
+.sizes .is-sold-out {
+  border-style: dashed;
+  color: #B9A796;
+  cursor: not-allowed;
+  background: linear-gradient(
+    to top left,
+    transparent calc(50% - 0.75px),
+    var(--line-strong) calc(50% - 0.75px),
+    var(--line-strong) calc(50% + 0.75px),
+    transparent calc(50% + 0.75px)
+  );
+}
+
+.sizes .is-sold-out:hover {
+  border-color: var(--line-strong);
+}
+
+/* ----- Garment artwork -----
+   Each layer is a solid colour shown through an SVG mask from assets/,
+   so one file per garment can be recoloured to any swatch. */
+
+.garment {
+  position: relative;
+  aspect-ratio: 200 / 240;
+  --garment-color: var(--espresso);
+  --garment-ink: var(--cream);
+}
+
+.garment__layer,
+.garment__icon {
+  position: absolute;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.garment__layer {
+  inset: 0;
+}
+
+.garment__body {
+  background-color: var(--garment-color);
+  transition: background-color 0.25s;
+}
+
+.garment__detail {
+  background-color: var(--garment-ink);
+  opacity: 0.45;
+}
+
+.garment__icon {
+  top: var(--icon-y);
+  left: var(--icon-x);
+  width: var(--icon-size);
+  aspect-ratio: 1;
+  background-color: var(--garment-ink);
+  transition: background-color 0.25s;
+}
+
+/* ----- Pager ----- */
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 40px;
+}
+
+.pager button {
+  min-width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--espresso);
+  border-radius: 99px;
+  font-weight: 700;
+}
+
+.pager button[aria-current="page"] {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+.pager button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pager button:not(:disabled):hover {
+  background: var(--saffron);
+}
+
+/* ----- Responsive ----- */
+
+@media (max-width: 900px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .product-card__title {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .swatches__label {
+    display: none;
+  }
+
+  .swatch {
+    width: 24px;
+    height: 24px;
+  }
+
+  .sizes button {
+    min-width: 32px;
+    padding: 5px 6px;
+    font-size: 11px;
+  }
+
+  .product-card__add {
+    right: 10px;
+    bottom: 10px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .product-card__badge {
+    top: 10px;
+    left: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-grid {
+    gap: 22px 14px;
+  }
+}

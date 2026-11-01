@@ -1,0 +1,257 @@
+/* ==========================================================================
+   Bag drawer and checkout steps
+   ========================================================================== */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s;
+}
+
+.bag-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  width: min(480px, 100%);
+  overflow-y: auto;
+  padding:
+    calc(24px + env(safe-area-inset-top, 0px))
+    max(24px, env(safe-area-inset-right, 0px))
+    calc(24px + env(safe-area-inset-bottom, 0px))
+    24px;
+  background: var(--cream);
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.25);
+  transform: translateX(100%);
+  transition: transform 0.45s var(--ease-out);
+}
+
+body.bag-is-open .scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.bag-is-open .bag-drawer {
+  transform: none;
+}
+
+.bag-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bag-drawer__header h3 {
+  font-size: 34px;
+}
+
+.bag-drawer__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* ----- Progress: one bar + label per step ----- */
+
+.checkout-progress {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 20px 0 6px;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.checkout-progress li::before {
+  content: "";
+  display: block;
+  height: 5px;
+  margin-bottom: 6px;
+  border-radius: 9px;
+  background: var(--line);
+  transition: background-color 0.3s;
+}
+
+.checkout-progress li.is-reached::before {
+  background: var(--terracotta);
+}
+
+/* ----- Line items ----- */
+
+.bag-line {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  animation: rise 0.3s ease-out both;
+}
+
+.bag-line__thumb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 72px;
+  height: 88px;
+  border-radius: 12px;
+}
+
+.bag-line__thumb .garment {
+  width: 80%;
+}
+
+.bag-line__info {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+
+.bag-line__info small {
+  display: block;
+  margin: 2px 0 8px;
+  color: var(--text-muted);
+}
+
+.bag-line__price {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.quantity {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 99px;
+  font-size: 13px;
+}
+
+.quantity button {
+  padding: 4px 10px;
+}
+
+.bag-empty {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ----- Totals ----- */
+
+.bag-totals {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.bag-totals__row {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bag-totals__row--total {
+  margin-top: 12px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.checkout-next {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+  padding: 17px;
+  border-radius: 99px;
+  background: var(--terracotta);
+  color: var(--cream);
+  font-size: 16px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.checkout-next:hover {
+  background: var(--rust);
+}
+
+.checkout-next:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.checkout-back {
+  width: 100%;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.checkout-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ----- Checkout forms ----- */
+
+.checkout-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.checkout-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.checkout-form input,
+.checkout-form select {
+  padding: 12px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--espresso);
+  font: 16px var(--font-body);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.checkout-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ----- Confirmation ----- */
+
+.order-confirmation {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.order-confirmation .display {
+  font-size: 44px;
+  color: var(--terracotta);
+}
+
+.order-confirmation p {
+  margin-top: 10px;
+  color: var(--text-muted);
+}

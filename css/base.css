@@ -1,0 +1,225 @@
+/* ==========================================================================
+   Base: design tokens, reset, shared typography, buttons and animations
+   ========================================================================== */
+
+:root {
+  /* Brand palette */
+  --espresso: #2A1A14;
+  --cream: #F6EEE3;
+  --terracotta: #D2582F;
+  --saffron: #F2A93B;
+  --clay: #E7C9A9;
+  --rust: #9E3F24;
+  --blush: #EDB59B;
+  --sand: #D9B98C;
+  --cocoa: #6B4130;
+
+  /* Supporting neutrals */
+  --text-muted: #8C7466;
+  --text-on-dark: #D9C8B8;
+  --line: #E2D5C7;
+  --line-strong: #CDBCAA;
+  --scrim: rgba(42, 26, 20, 0.5);
+  --shadow: rgba(42, 26, 20, 0.35);
+
+  /* Type */
+  --font-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --font-body: "DM Sans", -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  /* Layout */
+  --content-width: 1344px;
+  --gutter-left: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-right: max(16px, env(safe-area-inset-right, 0px));
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+
+  color-scheme: light;
+}
+
+/* ----- Reset ----- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--cream);
+}
+
+body {
+  color: var(--espresso);
+  font: 16px/1.5 var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Paint the phone's top safe-area band to match the dark header. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 60;
+  background: var(--espresso);
+}
+
+h1, h2, h3, h4, p {
+  margin: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--saffron);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ----- Layout helpers ----- */
+
+/* Side padding that also centres content at --content-width on wide screens. */
+.page-gutter {
+  padding-left: max(var(--gutter-left), calc((100% - var(--content-width)) / 2));
+  padding-right: max(var(--gutter-right), calc((100% - var(--content-width)) / 2));
+}
+
+/* ----- Typography ----- */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 75%;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+/* Text set along a circular path (hero ring, consent rings). */
+.ring-text {
+  fill: var(--cream);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+/* ----- Buttons ----- */
+
+.button {
+  display: inline-block;
+  padding: 15px 26px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 15px;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.button--primary {
+  background: var(--terracotta);
+  color: var(--cream);
+}
+
+.button--primary:hover {
+  background: var(--rust);
+}
+
+.button--outline {
+  border: 1.5px solid var(--cream);
+  color: var(--cream);
+}
+
+.button--outline:hover {
+  background: var(--cream);
+  color: var(--espresso);
+}
+
+.button--outline-dark {
+  border: 1.5px solid var(--espresso);
+}
+
+.button--outline-dark:hover {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+.button--dark {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+.icon-button {
+  font-size: 22px;
+  padding: 4px 8px;
+}
+
+.link-button {
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.link-button--muted {
+  width: 100%;
+  margin-top: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.link-button--muted:hover {
+  color: var(--terracotta);
+}
+
+/* ----- Shared animations ----- */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-10deg); }
+  50%      { transform: translateY(-22px) rotate(-6deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.04); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rise {
+  from { transform: translateY(12px); opacity: 0.4; }
+}
+
+@keyframes bump {
+  50% { transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

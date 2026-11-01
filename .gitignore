@@ -1,0 +1,32 @@
+# --- Local-only notes and plans (kept out of the repo) ---
+docs/
+
+# --- OS / editor clutter ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.idea/
+.vscode/
+
+# --- Secrets and local config ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.dev.vars
+
+# --- Tooling caches and build output (future Worker / Node work) ---
+node_modules/
+.wrangler/
+.vercel/
+dist/
+build/
+.cache/
+coverage/
+
+# --- Logs ---
+*.log
+npm-debug.log*
