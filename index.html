@@ -3,11 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Nano Motion Storefront</title>
+  <!--
+    Content Security Policy: the only places this page may load code, styles,
+    fonts and data from. Anything else is blocked by the browser.
+    When the pixel or relay is switched on (js/config.js), add their hosts here:
+    the pixel's script host to script-src, its endpoint hosts to connect-src
+    and img-src, and the relay's origin to connect-src.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self';
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src https://fonts.gstatic.com;
+    img-src 'self' data:;
+    connect-src 'self' https://ipwho.is https://get.geojs.io https://nominatim.openstreetmap.org https://randomuser.me;
+    manifest-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    upgrade-insecure-requests">
+  <title>Nano Motion · Running, training &amp; yoga gear</title>
+  <meta name="description" content="Premium running, training and yoga gear engineered for every pace. Shop the Nano Motion Fall '26 drop: tees, jackets, leggings and accessories.">
+  <meta name="theme-color" content="#2A1A14">
+  <meta name="color-scheme" content="light">
+  <link rel="canonical" href="https://store.akash.app/">
+
+  <!-- Icons -->
+  <link rel="icon" href="favicon.ico" sizes="48x48">
+  <link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png">
+  <link rel="manifest" href="assets/brand/site.webmanifest">
+
+  <!-- Link previews (Open Graph / social cards) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Nano Motion">
+  <meta property="og:title" content="Nano Motion · Move at the speed of you">
+  <meta property="og:description" content="Premium running, training and yoga gear. Shop the Fall '26 drop.">
+  <meta property="og:url" content="https://store.akash.app/">
+  <meta property="og:image" content="https://store.akash.app/assets/brand/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Nano Motion: Move at the speed of you. A dark jacket on an orange circle.">
+  <meta name="twitter:card" content="summary_large_image">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=DM+Sans:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75,800..900&family=DM+Sans:wght@400;600;700&display=swap">
 
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
@@ -17,8 +58,39 @@
   <link rel="stylesheet" href="css/consent.css">
 
   <script type="module" src="js/main.js"></script>
+  <!-- Fetch every module in parallel instead of discovering imports one level at a time. -->
+  <link rel="modulepreload" href="js/state.js">
+  <link rel="modulepreload" href="js/dom.js">
+  <link rel="modulepreload" href="js/events.js">
+  <link rel="modulepreload" href="js/currency.js">
+  <link rel="modulepreload" href="js/catalog.js">
+  <link rel="modulepreload" href="js/garment.js">
+  <link rel="modulepreload" href="js/selection.js">
+  <link rel="modulepreload" href="js/search.js">
+  <link rel="modulepreload" href="js/variant-picker.js">
+  <link rel="modulepreload" href="js/focus.js">
+  <link rel="modulepreload" href="js/toast.js">
+  <link rel="modulepreload" href="js/consent.js">
+  <link rel="modulepreload" href="js/info.js">
+  <link rel="modulepreload" href="js/bag.js">
+  <link rel="modulepreload" href="js/card-validation.js">
+  <link rel="modulepreload" href="js/demo-shopper.js">
+  <link rel="modulepreload" href="js/shop.js">
+  <link rel="modulepreload" href="js/quick-view.js">
+  <link rel="modulepreload" href="js/hero.js">
+  <link rel="modulepreload" href="js/structured-data.js">
+  <link rel="modulepreload" href="js/config.js">
+  <link rel="modulepreload" href="js/adapters/console-logger.js">
+  <link rel="modulepreload" href="js/adapters/conversion-events.js">
+  <link rel="modulepreload" href="js/adapters/pixel.js">
+  <link rel="modulepreload" href="js/adapters/capi-relay.js">
 </head>
 <body>
+  <a class="skip-link" href="#shop">Skip to products</a>
+
+  <noscript>
+    <p class="noscript-note">The Nano Motion store needs JavaScript to show products and checkout. Please turn it on and reload.</p>
+  </noscript>
 
   <!-- ===== Header ===== -->
   <header class="site-header page-gutter">
@@ -73,7 +145,7 @@
     </section>
 
     <!-- ===== Scrolling banner ===== -->
-    <div class="marquee display" aria-label="Free shipping over $100, 30-day returns, ships to 40+ countries">
+    <div class="marquee display" role="marquee" aria-label="Free shipping over $100, 30-day returns, ships to 40+ countries">
       <div class="marquee__track" aria-hidden="true">
         FREE SHIPPING OVER $100 ✦ 30-DAY RETURNS ✦ SHIPS TO 40+ COUNTRIES ✦ FALL '26 DROP ✦
         FREE SHIPPING OVER $100 ✦ 30-DAY RETURNS ✦ SHIPS TO 40+ COUNTRIES ✦ FALL '26 DROP ✦&nbsp;
@@ -85,7 +157,21 @@
       <div class="filters" id="filters" role="group" aria-label="Filter products"></div>
       <div class="shop__header">
         <h2 class="display">The Fall Drop</h2>
-        <span class="shop__count" id="result-count"></span>
+        <span class="shop__count" id="result-count" role="status"></span>
+      </div>
+      <div class="shop__tools">
+        <label class="search-field" for="product-search">
+          <span class="visually-hidden">Search products</span>
+          <input type="search" id="product-search" placeholder="Search jackets, yoga, women's tees…" autocomplete="off" enterkeyhint="search">
+        </label>
+        <label class="sort-field" for="product-sort">
+          Sort
+          <select id="product-sort">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
+        </label>
       </div>
       <div class="product-grid" id="product-grid"></div>
       <nav class="pager" id="pager" aria-label="Product pages"></nav>
@@ -108,6 +194,7 @@
       <button type="button" data-info="help">Help</button>
       <button type="button" data-info="shipping">Shipping</button>
       <button type="button" data-info="returns">Returns</button>
+      <button type="button" data-info="privacy">Privacy</button>
     </nav>
   </footer>
 
@@ -137,7 +224,7 @@
       </text>
     </svg>
     <div class="consent-bubble__content">
-      <h4 class="display" id="consent-title">Cookies, <span>briefly.</span></h4>
+      <h2 class="display" id="consent-title">Cookies, <span>briefly.</span></h2>
       <p id="consent-message"></p>
       <p class="consent-bubble__gpc" id="consent-gpc-note" hidden>Global Privacy Control detected: you're opted out of sharing.</p>
       <div class="consent-bubble__actions" id="consent-actions"></div>
@@ -159,7 +246,7 @@
   <!-- ===== Privacy choices dialog ===== -->
   <div class="modal" id="privacy-modal" hidden>
     <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
-      <h4 class="display" id="privacy-title">Privacy choices</h4>
+      <h2 class="display" id="privacy-title">Privacy choices</h2>
       <p class="modal__intro">Choose which cookies Nano Motion can use. You can change this any time from the cookie button or the footer.</p>
 
       <label class="demo-region" for="region-picker">
@@ -209,11 +296,19 @@
     </div>
   </div>
 
+  <!-- ===== Product quick view (js/quick-view.js) ===== -->
+  <div class="modal quick-view" id="quick-view" hidden>
+    <div class="quick-view__panel" role="dialog" aria-modal="true" aria-labelledby="quick-view-title">
+      <button class="icon-button quick-view__close" id="quick-view-close" type="button" aria-label="Close">✕</button>
+      <div class="quick-view__body" id="quick-view-body"></div>
+    </div>
+  </div>
+
   <!-- ===== Help / Shipping / Returns dialog (js/info.js) ===== -->
   <div class="modal" id="info-modal" hidden>
     <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="info-title">
       <div class="modal__header">
-        <h4 class="display" id="info-title"></h4>
+        <h2 class="display" id="info-title"></h2>
         <button class="icon-button" id="info-close" type="button" aria-label="Close">✕</button>
       </div>
       <div class="info-content" id="info-content"></div>

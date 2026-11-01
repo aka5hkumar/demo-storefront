@@ -32,6 +32,12 @@
   transform: none;
 }
 
+/* Out of the way while the bag is open (the bag asks inline instead). */
+body.bag-is-open .consent-bubble.is-visible {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .consent-bubble.is-visible .consent-bubble__content {
   animation: rise 0.5s 0.35s ease-out both;
 }
@@ -54,12 +60,12 @@
   text-align: center;
 }
 
-.consent-bubble h4 {
+.consent-bubble h2 {
   font-size: clamp(26px, 8vw, 34px);
   line-height: 0.9;
 }
 
-.consent-bubble h4 span {
+.consent-bubble h2 span {
   color: var(--cream);
 }
 

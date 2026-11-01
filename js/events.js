@@ -20,11 +20,11 @@ function createEventId() {
 /** Publish an event. Pass `id` in detail to set a stable dedup key (e.g. an order number). */
 export function emit(name, detail = {}) {
   const event = {
-    name,
     id: detail.id ?? createEventId(),
     timestamp: Date.now(),
     currency: state.currency,
     ...detail,
+    name, // last, so a detail field can never overwrite the event name
   };
 
   bus.dispatchEvent(new CustomEvent(name, { detail: event }));

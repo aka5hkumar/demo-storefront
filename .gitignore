@@ -18,7 +18,7 @@ desktop.ini
 *.key
 .dev.vars
 
-# --- Tooling caches and build output (future Worker / Node work) ---
+# --- Tooling caches and build output ---
 node_modules/
 .wrangler/
 .vercel/
@@ -27,6 +27,14 @@ build/
 .cache/
 coverage/
 
+# --- Test output ---
+test-results/
+playwright-report/
+blob-report/
+
 # --- Logs ---
 *.log
 npm-debug.log*
+
+# --- Files waiting to be deleted by hand ---
+_to_delete/

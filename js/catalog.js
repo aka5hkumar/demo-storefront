@@ -51,6 +51,31 @@ export const GARMENTS = {
   'duffel':      { hasDetail: true,  icon: { x: 41, y: 54.2, size: 18 } },
 };
 
+/**
+ * Copy for the quick-view panel, per garment shape.
+ * `fit` is shown for clothing only.
+ */
+export const GARMENT_DETAILS = {
+  'tee':         { description: 'A light, quick-drying tee with flat seams that stay put mile after mile.', fabric: '88% recycled polyester, 12% elastane', fit: 'Regular fit' },
+  'crop':        { description: 'A cropped, boxy tee that sits just above high-rise leggings and shorts.', fabric: '100% organic cotton jersey', fit: 'Relaxed, cropped fit' },
+  'boxy':        { description: 'A heavyweight cotton tee with a dropped shoulder and a structured drape.', fabric: '100% organic cotton, 240 gsm', fit: 'Oversized fit' },
+  'tank':        { description: 'A breezy tank with a racer back for full range of motion.', fabric: '92% recycled polyester, 8% elastane', fit: 'Regular fit' },
+  'long-sleeve': { description: 'A soft long sleeve for cool starts, with thumbholes to keep sleeves in place.', fabric: '84% recycled polyester, 16% elastane', fit: 'Slim fit' },
+  'half-zip':    { description: 'A brushed-back half-zip layer that traps warmth without the bulk.', fabric: '90% recycled polyester, 10% elastane, brushed back', fit: 'Regular fit' },
+  'hoodie':      { description: 'A midweight hoodie for warm-ups, cool-downs and everything after.', fabric: '80% organic cotton, 20% recycled polyester fleece', fit: 'Relaxed fit' },
+  'jacket':      { description: 'A packable, water-resistant shell with reflective details for low light.', fabric: '100% recycled nylon ripstop, PFC-free DWR finish', fit: 'Regular fit' },
+  'vest':        { description: 'A lightly insulated vest that keeps your core warm and your arms free.', fabric: '100% recycled nylon, recycled synthetic fill', fit: 'Regular fit' },
+  'shorts':      { description: 'Lightweight shorts with a built-in liner and a zip pocket for keys.', fabric: '100% recycled polyester woven, mesh liner', fit: 'Regular fit' },
+  'leggings':    { description: 'High-rise, squat-proof tights with a hidden waistband pocket.', fabric: '74% recycled nylon, 26% elastane', fit: 'Second-skin fit' },
+  'joggers':     { description: 'Tapered joggers with a soft brushed inside and deep pockets.', fabric: '78% organic cotton, 22% recycled polyester', fit: 'Tapered fit' },
+  'sports-bra':  { description: 'Medium support with removable cups and a wide, comfortable band.', fabric: '75% recycled nylon, 25% elastane', fit: 'Medium support' },
+  'cap':         { description: 'A lightweight, packable cap with a sweat-wicking band.', fabric: '100% recycled polyester, adjustable strap' },
+  'socks':       { description: 'Cushioned crew socks with arch support and a seamless toe.', fabric: '62% merino wool, 35% nylon, 3% elastane' },
+  'bottle':      { description: 'Double-walled steel keeps drinks cold for 24 hours or hot for 12.', fabric: '18/8 stainless steel, 750 ml' },
+  'mat':         { description: 'Grippy natural rubber with a cushioned core for steady footing.', fabric: 'Natural rubber and cork top layer' },
+  'duffel':      { description: 'A weekend-sized gym bag with a separate shoe pocket.', fabric: 'Recycled polyester canvas, water-resistant base' },
+};
+
 /** Card background colours (CSS values). */
 export const CARD_BACKGROUNDS = {
   saffron: 'var(--saffron)',

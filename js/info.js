@@ -1,6 +1,7 @@
 /** Footer Help / Shipping / Returns dialogs (demo content). */
 import { $ } from './dom.js';
 import { emit } from './events.js';
+import { openDialog, closeDialog } from './focus.js';
 
 const PAGES = {
   help: {
@@ -29,6 +30,27 @@ const PAGES = {
       <section><b>Free exchanges</b>Swap sizes or colours at no cost, while stock lasts.</section>
       <section><b>Refunds</b>Issued to your original payment method within 5 business days of us receiving the return.</section>`,
   },
+  privacy: {
+    title: 'Privacy',
+    body: `
+      <section><b>What we store on your device</b>
+        <code>nm_consent</code> cookie: your cookie choices (180 days).
+        Local storage: your currency and a copy of your cookie choices.
+        Your bag is kept in memory only and clears when you leave.</section>
+      <section><b>Advertising measurement</b>
+        Only with your permission, an advertising partner's pixel and a server
+        relay record which ads led to visits and orders. Contact details from
+        checkout are hashed (SHA-256) in your browser before anything is sent.
+        Change this any time from Cookie settings.</section>
+      <section><b>Services this demo calls</b>
+        Opening the bag looks up your approximate location from your IP
+        address (ipwho.is or geojs.io), a nearby street (OpenStreetMap) and a
+        random demo shopper (randomuser.me) to fill in the checkout form.
+        Fonts load from Google Fonts.</section>
+      <section><b>Your choices</b>
+        Use Cookie settings or Your Privacy Choices in the footer to change
+        consent, or Reset cookie consent to start over.</section>`,
+  },
 };
 
 function openInfo(pageId) {
@@ -36,12 +58,14 @@ function openInfo(pageId) {
   $('#info-title').textContent = page.title;
   $('#info-content').innerHTML = page.body;
   $('#info-modal').hidden = false;
-  $('#info-close').focus();
+  openDialog($('#info-modal'), $('#info-close'));
   emit('info_viewed', { page: pageId });
 }
 
 function closeInfo() {
+  if ($('#info-modal').hidden) return;
   $('#info-modal').hidden = true;
+  closeDialog($('#info-modal'));
 }
 
 export function initInfoDialogs() {

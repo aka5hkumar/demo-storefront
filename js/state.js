@@ -12,6 +12,8 @@ export const state = {
   category: 'All',
   gender: 'All',
   page: 1,
+  query: '',
+  sort: 'featured', // featured | price-asc | price-desc
 
   /**
    * Bag lines keyed by "sku|color|size".

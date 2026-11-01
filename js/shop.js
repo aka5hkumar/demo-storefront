@@ -1,22 +1,24 @@
 /**
- * Shop section: gender/category filters, product grid, colour and size
- * pickers on each card, and pagination.
+ * Shop section: search, sort, gender/category filters, the product grid,
+ * colour and size pickers on each card, and pagination.
  */
-import { $, $$ } from './dom.js';
+import { $, escapeHtml } from './dom.js';
 import { state } from './state.js';
 import { emit, on } from './events.js';
 import { formatPrice } from './currency.js';
-import {
-  PRODUCTS, COLORS, CARD_BACKGROUNDS, GENDER_LABELS, findProduct, isInStock,
-} from './catalog.js';
-import { garmentMarkup, paintGarment } from './garment.js';
-import { getSelection, updateSelection } from './selection.js';
+import { PRODUCTS, CARD_BACKGROUNDS, GENDER_LABELS, findProduct } from './catalog.js';
+import { garmentMarkup } from './garment.js';
+import { getSelection } from './selection.js';
+import { matchesSearch } from './search.js';
+import { swatchesMarkup, sizesMarkup, handleVariantClick, bindSwatchPreview } from './variant-picker.js';
 import { addToBag } from './bag.js';
-import { showToast } from './toast.js';
+import { openQuickView } from './quick-view.js';
 
 const PAGE_SIZE = 8;
 const CATEGORIES = ['All', 'Run', 'Train', 'Outerwear', 'Yoga', 'Accessories'];
 const GENDERS = ['All', 'Women', 'Men'];
+const SEARCH_RENDER_DELAY_MS = 150;   // re-render while typing, lightly debounced
+const SEARCH_EVENT_DELAY_MS = 800;    // record a search once the shopper pauses
 
 /**
  * Products shown first for each gender view, so switching the toggle visibly
@@ -34,19 +36,20 @@ export function initShop() {
 
   $('#filters').addEventListener('click', handleFilterClick);
   $('#pager').addEventListener('click', handlePagerClick);
+  $('#product-search').addEventListener('input', handleSearchInput);
+  $('#product-sort').addEventListener('change', handleSortChange);
+  $('#product-grid').addEventListener('click', handleGridClick);
 
-  const grid = $('#product-grid');
-  grid.addEventListener('click', handleCardClick);
-  grid.addEventListener('mouseover', previewSwatchColor);
-  grid.addEventListener('mouseout', endSwatchPreview);
+  bindSwatchPreview($('#product-grid'), '.product-card', (card) => findProduct(card.dataset.sku));
 
   // Nav links and hero buttons that jump to a category.
   document.addEventListener('click', handleCategoryLink);
 
   on('currency_changed', renderProductGrid);
+  on('quick_view_closed', (event) => refreshCard(event.sku));
 }
 
-/* ----- Filtering and ordering ----- */
+/* ----- Filtering, search and ordering ----- */
 
 function matchesFilters(product) {
   const categoryMatches = state.category === 'All' || product.category === state.category;
@@ -55,10 +58,10 @@ function matchesFilters(product) {
     product.gender === 'U' ||
     product.gender === state.gender.charAt(0);
 
-  return categoryMatches && genderMatches;
+  return categoryMatches && genderMatches && matchesSearch(product, state.query);
 }
 
-function sortRank(product) {
+function featuredRank(product) {
   const featured = FEATURED_SKUS[state.gender];
   const position = featured.indexOf(product.sku);
   if (position !== -1) return position;
@@ -68,11 +71,19 @@ function sortRank(product) {
   return featured.length + unisexPenalty;
 }
 
+const SORTS = {
+  featured: (a, b) => featuredRank(a.product) - featuredRank(b.product),
+  'price-asc': (a, b) => a.product.prices[state.currency] - b.product.prices[state.currency],
+  'price-desc': (a, b) => b.product.prices[state.currency] - a.product.prices[state.currency],
+};
+
 function visibleProducts() {
+  const compare = SORTS[state.sort] ?? SORTS.featured;
+
   return PRODUCTS
     .map((product, catalogIndex) => ({ product, catalogIndex }))
     .filter(({ product }) => matchesFilters(product))
-    .sort((a, b) => sortRank(a.product) - sortRank(b.product) || a.catalogIndex - b.catalogIndex)
+    .sort((a, b) => compare(a, b) || a.catalogIndex - b.catalogIndex)
     .map(({ product }) => product);
 }
 
@@ -106,51 +117,60 @@ export function renderProductGrid() {
 
   const pageStart = (state.page - 1) * PAGE_SIZE;
   const pageProducts = products.slice(pageStart, pageStart + PAGE_SIZE);
+  const query = state.query.trim();
 
-  $('#product-grid').innerHTML = pageProducts.map(productCardMarkup).join('');
-  $('#result-count').textContent = `${products.length} item${products.length === 1 ? '' : 's'}`;
+  $('#product-grid').innerHTML = products.length
+    ? pageProducts.map(productCardMarkup).join('')
+    : `<div class="no-results">
+         <p>No matches for <b>“${escapeHtml(query)}”</b>${state.category !== 'All' || state.gender !== 'All' ? ' with these filters' : ''}.</p>
+         <p>Try “jacket”, “yoga” or “women's tee”.</p>
+         <button type="button" class="button button--outline-dark" data-clear-search>Clear search and filters</button>
+       </div>`;
+
+  const itemWord = `${products.length} item${products.length === 1 ? '' : 's'}`;
+  $('#result-count').textContent = query ? `${itemWord} for “${query}”` : itemWord;
   renderPager(pageCount);
 }
 
 function productCardMarkup(product, index) {
   const selection = getSelection(product);
-
-  const badge = product.badge
-    ? `<span class="product-card__badge">${product.badge}</span>`
-    : '';
-
-  const swatches = product.colors.map((colorKey) => `
-    <button type="button" class="swatch" style="--swatch-color: ${COLORS[colorKey].hex}"
-      data-color="${colorKey}" aria-label="${COLORS[colorKey].label}"
-      aria-pressed="${colorKey === selection.color}"></button>
-  `).join('');
-
-  const sizes = product.sizes.map((size) => {
-    if (!isInStock(product, size)) {
-      return `<button type="button" class="is-sold-out" data-sold-out-size="${size}"
-        aria-disabled="true" aria-label="${size}, out of stock" title="Out of stock">${size}</button>`;
-    }
-    return `<button type="button" data-size="${size}" aria-pressed="${size === selection.size}">${size}</button>`;
-  }).join('');
+  const badge = product.badge ? `<span class="product-card__badge">${product.badge}</span>` : '';
 
   return `
     <article class="product-card" data-sku="${product.sku}" style="animation-delay: ${index * 40}ms">
       <div class="product-card__image" style="background: ${CARD_BACKGROUNDS[product.background]}">
+        <button type="button" class="product-card__view" data-quick-view aria-label="Quick view: ${product.name}, ${GENDER_LABELS[product.gender]}"></button>
         ${badge}
         ${garmentMarkup(product, selection.color)}
         <button type="button" class="product-card__add" data-add-to-bag data-track="add_to_cart">+ Add</button>
       </div>
       <div class="product-card__title">
-        <h3>${product.name}</h3>
+        <h3><button type="button" class="product-card__name" data-quick-view>${product.name}</button></h3>
         <span class="product-card__gender">${GENDER_LABELS[product.gender]}</span>
       </div>
       <div class="product-card__price">${formatPrice(product.prices[state.currency], state.currency)}</div>
-      <div class="swatches" role="group" aria-label="Colour">
-        ${swatches}
-        <span class="swatches__label">${COLORS[selection.color].label}</span>
-      </div>
-      <div class="sizes" role="group" aria-label="Size">${sizes}</div>
+      ${swatchesMarkup(product)}
+      ${sizesMarkup(product)}
     </article>`;
+}
+
+/** Re-render one card in place (after its colour or size changed in quick view). */
+export function refreshCard(sku) {
+  const card = document.querySelector(`.product-card[data-sku="${sku}"]`);
+  if (!card) return;
+
+  // If focus was on this card (it returns there when the quick view closes),
+  // put it back on the same button in the new card.
+  const buttons = (root) => [...root.querySelectorAll('button')];
+  const focusedIndex = buttons(card).indexOf(document.activeElement);
+
+  const template = document.createElement('template');
+  template.innerHTML = productCardMarkup(findProduct(sku), 0).trim();
+  const fresh = template.content.firstElementChild;
+  fresh.style.animation = 'none';
+  card.replaceWith(fresh);
+
+  if (focusedIndex !== -1) buttons(fresh)[focusedIndex]?.focus();
 }
 
 function renderPager(pageCount) {
@@ -171,12 +191,6 @@ function renderPager(pageCount) {
     <button type="button" data-page="${state.page + 1}" aria-label="Next page" ${state.page === pageCount ? 'disabled' : ''}>→</button>`;
 }
 
-/** Update one card's swatch label and artwork colour without re-rendering it. */
-function showCardColor(card, colorKey) {
-  paintGarment($('.garment', card), colorKey);
-  $('.swatches__label', card).textContent = COLORS[colorKey].label;
-}
-
 /* ----- Event handlers ----- */
 
 function handleFilterClick(event) {
@@ -192,6 +206,38 @@ function handleCategoryLink(event) {
   if (link) setFilter({ category: link.dataset.category });
 }
 
+let searchRenderTimer;
+let searchEventTimer;
+
+function handleSearchInput(event) {
+  state.query = event.target.value;
+  state.page = 1;
+
+  clearTimeout(searchRenderTimer);
+  searchRenderTimer = setTimeout(renderProductGrid, SEARCH_RENDER_DELAY_MS);
+
+  // One search event per pause in typing, not one per keystroke.
+  clearTimeout(searchEventTimer);
+  searchEventTimer = setTimeout(() => {
+    const query = state.query.trim();
+    if (query) emit('search', { query, results: visibleProducts().length });
+  }, SEARCH_EVENT_DELAY_MS);
+}
+
+function handleSortChange(event) {
+  state.sort = event.target.value;
+  state.page = 1;
+  renderProductGrid();
+  emit('sort_changed', { sort: state.sort });
+}
+
+function clearSearchAndFilters() {
+  state.query = '';
+  $('#product-search').value = '';
+  setFilter({ gender: 'All', category: 'All' });
+  $('#product-search').focus();
+}
+
 function handlePagerClick(event) {
   const button = event.target.closest('button[data-page]');
   if (!button || button.disabled) return;
@@ -201,41 +247,24 @@ function handlePagerClick(event) {
   $('#shop').scrollIntoView({ behavior: 'smooth' });
 }
 
-function handleCardClick(event) {
+function handleGridClick(event) {
   const button = event.target.closest('button');
-  const card = event.target.closest('.product-card');
-  if (!button || !card) return;
+  if (!button) return;
 
+  if ('clearSearch' in button.dataset) {
+    clearSearchAndFilters();
+    return;
+  }
+
+  const card = button.closest('.product-card');
+  if (!card) return;
   const product = findProduct(card.dataset.sku);
-  const { color, size, soldOutSize } = button.dataset;
 
-  if (color) {
-    updateSelection(product, { color });
-    $$('.swatch', card).forEach((swatch) => swatch.setAttribute('aria-pressed', swatch === button));
-    showCardColor(card, color);
-    emit('variant_selected', { sku: product.sku, color });
-  } else if (size) {
-    updateSelection(product, { size });
-    $$('[data-size]', card).forEach((sizeButton) => sizeButton.setAttribute('aria-pressed', sizeButton === button));
-    emit('variant_selected', { sku: product.sku, size });
-  } else if (soldOutSize) {
-    emit('size_unavailable', { sku: product.sku, size: soldOutSize });
-    showToast(`Size ${soldOutSize} is out of stock`);
+  if ('quickView' in button.dataset) {
+    openQuickView(product);
   } else if ('addToBag' in button.dataset) {
     addToBag(product, 'product_card');
+  } else {
+    handleVariantClick(button, product, card);
   }
-}
-
-/** Hovering a swatch previews that colour; leaving restores the chosen one. */
-function previewSwatchColor(event) {
-  const swatch = event.target.closest('.swatch');
-  if (swatch) showCardColor(swatch.closest('.product-card'), swatch.dataset.color);
-}
-
-function endSwatchPreview(event) {
-  const swatch = event.target.closest('.swatch');
-  if (!swatch || swatch.contains(event.relatedTarget)) return;
-
-  const card = swatch.closest('.product-card');
-  showCardColor(card, getSelection(findProduct(card.dataset.sku)).color);
 }

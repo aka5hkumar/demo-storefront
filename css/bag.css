@@ -145,6 +145,42 @@ body.bag-is-open .bag-drawer {
   color: var(--text-muted);
 }
 
+/* ----- Consent ask (bag step, only if no choice was made) ----- */
+
+.checkout-consent {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+.checkout-consent p {
+  color: var(--text-muted);
+}
+
+.checkout-consent__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Same size and weight for both answers */
+.checkout-consent__actions button {
+  padding: 10px;
+  border: 1.5px solid var(--espresso);
+  border-radius: 99px;
+  font-weight: 700;
+}
+
+.checkout-consent__actions button:hover {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
 /* ----- Totals ----- */
 
 .bag-totals {
@@ -163,7 +199,7 @@ body.bag-is-open .bag-drawer {
 .bag-totals__row--total {
   margin-top: 12px;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .checkout-next {
@@ -172,10 +208,10 @@ body.bag-is-open .bag-drawer {
   margin-top: 18px;
   padding: 17px;
   border-radius: 99px;
-  background: var(--terracotta);
+  background: var(--terracotta-deep);
   color: var(--cream);
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -223,7 +259,7 @@ body.bag-is-open .bag-drawer {
 
 .demo-shopper-note .link-button {
   margin-left: 4px;
-  color: var(--terracotta);
+  color: var(--terracotta-deep);
 }
 
 .checkout-note {
@@ -279,7 +315,7 @@ body.bag-is-open .bag-drawer {
 
 .card-brand {
   float: right;
-  color: var(--terracotta);
+  color: var(--terracotta-deep);
   letter-spacing: 0.04em;
 }
 
@@ -306,7 +342,7 @@ body.bag-is-open .bag-drawer {
 
 .order-confirmation .display {
   font-size: 44px;
-  color: var(--terracotta);
+  color: var(--terracotta-deep);
 }
 
 .order-confirmation p {

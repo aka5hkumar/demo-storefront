@@ -34,7 +34,7 @@
 }
 
 .gender-toggle button[aria-pressed="true"] {
-  background: var(--terracotta);
+  background: var(--terracotta-deep);
   color: var(--cream);
 }
 
@@ -71,6 +71,104 @@
   font-size: 14px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* ----- Search and sort ----- */
+
+.shop__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.search-field {
+  position: relative;
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+/* Magnifier drawn with CSS so no icon file is needed. */
+.search-field::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  transform: translateY(-60%);
+  pointer-events: none;
+}
+
+.search-field::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 27px;
+  width: 6px;
+  height: 2px;
+  background: var(--text-muted);
+  transform: translateY(4px) rotate(45deg);
+  pointer-events: none;
+}
+
+.search-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 16px 11px 42px;
+  border: 1.5px solid var(--espresso);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--espresso);
+  font: inherit;
+  font-size: 15px;
+}
+
+.search-field input::placeholder {
+  color: var(--text-muted);
+}
+
+.sort-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sort-field select {
+  padding: 10px 14px;
+  border: 1.5px solid var(--espresso);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--espresso);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 18px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.no-results b {
+  color: var(--espresso);
+}
+
+.no-results .button {
+  margin-top: 10px;
 }
 
 /* ----- Grid ----- */
@@ -120,7 +218,39 @@
   font-weight: 700;
 }
 
+/* Invisible button over the whole image: opens the quick view.
+   The badge and "+ Add" sit above it so they stay clickable. */
+.product-card__view {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  cursor: zoom-in;
+}
+
+.product-card__view:focus-visible {
+  outline-offset: -4px;
+}
+
+.product-card__image .garment {
+  pointer-events: none;
+}
+
+.product-card__name {
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.product-card__name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .product-card__add {
+  z-index: 1;
   position: absolute;
   right: 14px;
   bottom: 14px;
@@ -330,6 +460,14 @@
 }
 
 @media (max-width: 600px) {
+  .sort-field {
+    margin-left: 0;
+  }
+
+  .search-field {
+    max-width: none;
+  }
+
   .product-card__title {
     flex-direction: column;
     gap: 0;

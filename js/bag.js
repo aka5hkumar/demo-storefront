@@ -6,14 +6,16 @@
  * (see demo-shopper.js). What the shopper submits is kept in state.customer for
  * future tracking adapters; it is never put into event payloads here.
  */
-import { $, $$, escapeHtml } from './dom.js';
+import { $, $$, escapeHtml, readStorage, writeStorage } from './dom.js';
 import { state } from './state.js';
 import { emit, on } from './events.js';
 import { formatPrice, shippingCost } from './currency.js';
-import { COLORS, CARD_BACKGROUNDS, GENDER_LABELS, findProduct } from './catalog.js';
+import { COLORS, CARD_BACKGROUNDS, GENDER_LABELS, findProduct, isInStock } from './catalog.js';
 import { garmentMarkup } from './garment.js';
 import { getSelection } from './selection.js';
 import { createDemoShopper } from './demo-shopper.js';
+import { canAskAtCheckout, recordConsentChoice } from './consent.js';
+import { openDialog, closeDialog } from './focus.js';
 import {
   validateCard, isDeclinedTestCard, detectCardBrand, formatCardNumber,
 } from './card-validation.js';
@@ -37,7 +39,37 @@ export function initBag() {
   });
 
   on('currency_changed', renderBag);
+  restoreSavedBag();
   renderBag();
+}
+
+/* ----- Saved bag -----
+   The bag is kept in localStorage so it survives a refresh or a return visit.
+   Restoring it doesn't emit add_to_cart again: those events fired when the
+   items were first added. It's cleared once an order is placed. */
+
+const BAG_STORAGE_KEY = 'nm-bag';
+const BAG_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // forget bags older than 30 days
+
+function saveBag() {
+  writeStorage(BAG_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), lines: [...state.bag.values()] }));
+}
+
+function restoreSavedBag() {
+  try {
+    const saved = JSON.parse(readStorage(BAG_STORAGE_KEY));
+    if (!saved || Date.now() - saved.savedAt > BAG_MAX_AGE_MS) return;
+
+    for (const line of saved.lines ?? []) {
+      const product = findProduct(line.sku);
+      // Skip anything that no longer exists or is now out of stock.
+      if (!product || !product.colors.includes(line.color) || !isInStock(product, line.size)) continue;
+      if (!Number.isInteger(line.quantity) || line.quantity < 1) continue;
+      state.bag.set(lineKey(line.sku, line.color, line.size), { ...line });
+    }
+  } catch {
+    /* unreadable saved bag: start empty */
+  }
 }
 
 /* ----- Demo shopper ----- */
@@ -101,7 +133,7 @@ function itemCount() {
 function lineTrackingDetails(product, color, size) {
   return {
     sku: product.sku,
-    name: product.name,
+    product_name: product.name,
     category: product.category,
     gender: product.gender,
     color,
@@ -119,6 +151,7 @@ export function addToBag(product, source) {
 
   line.quantity += 1;
   state.bag.set(key, line);
+  saveBag();
 
   emit('add_to_cart', { ...lineTrackingDetails(product, color, size), source });
   bumpBagButton();
@@ -134,6 +167,7 @@ function changeQuantity(key, delta) {
   const product = findProduct(line.sku);
   line.quantity += delta;
   if (line.quantity <= 0) state.bag.delete(key);
+  saveBag();
 
   const eventName = delta > 0 ? 'add_to_cart' : 'remove_from_cart';
   emit(eventName, { ...lineTrackingDetails(product, line.color, line.size), source: 'bag_quantity' });
@@ -144,15 +178,20 @@ function changeQuantity(key, delta) {
 
 export function openBag() {
   prepareDemoShopper();
+
   document.body.classList.add('bag-is-open');
   $('#bag-drawer').setAttribute('aria-hidden', 'false');
   renderBag();
+  openDialog($('#bag-drawer'), $('#bag-close')); // traps focus, locks the page behind
   emit('cart_opened', { subtotal: subtotal() });
 }
 
 export function closeBag() {
+  if (!document.body.classList.contains('bag-is-open')) return;
+
   document.body.classList.remove('bag-is-open');
   $('#bag-drawer').setAttribute('aria-hidden', 'true');
+  closeDialog($('#bag-drawer')); // returns focus to the button that opened it
 }
 
 function bumpBagButton() {
@@ -210,7 +249,27 @@ function bagStepMarkup() {
     ? lines.map(bagLineMarkup).join('')
     : '<p class="bag-empty">Your bag is empty. Tap + Add on any product.</p>';
 
-  return linesMarkup + totalsMarkup({ nextLabel: CHECKOUT_STEPS[0].nextLabel, nextDisabled: !lines.length });
+  const consentAsk = lines.length && canAskAtCheckout() ? checkoutConsentMarkup() : '';
+
+  return linesMarkup + consentAsk + totalsMarkup({ nextLabel: CHECKOUT_STEPS[0].nextLabel, nextDisabled: !lines.length });
+}
+
+/**
+ * A second, optional consent ask in the bag, shown only to visitors who never
+ * answered the cookie prompt. Placed before "Checkout" so that, if they allow
+ * it, checkout_started and the order are both measured. Both buttons carry
+ * equal weight and the order works either way.
+ */
+function checkoutConsentMarkup() {
+  return `
+    <section class="checkout-consent" aria-labelledby="checkout-consent-title">
+      <b id="checkout-consent-title">Help us measure our ads?</b>
+      <p>With your OK we use cookies to see which ads led to this order. Your order works the same either way.</p>
+      <div class="checkout-consent__actions">
+        <button type="button" data-checkout-consent="decline">No thanks</button>
+        <button type="button" data-checkout-consent="allow">Allow</button>
+      </div>
+    </section>`;
 }
 
 function bagLineMarkup({ key, product, color, size, quantity }) {
@@ -427,6 +486,10 @@ function placeOrder() {
     })),
     total: subtotal(),
   });
+
+  // The order is placed: empty the saved bag (the confirmation doesn't need it).
+  state.bag.clear();
+  saveBag();
 }
 
 function goToNextStep() {
@@ -471,13 +534,18 @@ function handleBagClick(event) {
     closeBag();
   }
 
+  if (data.checkoutConsent) {
+    const allow = data.checkoutConsent === 'allow';
+    recordConsentChoice({ allow, method: allow ? 'checkout_allow' : 'checkout_decline' });
+    renderBag();
+  }
+
   if ('shuffleShopper' in data) {
     state.customer = {};
     shuffleDemoShopper();
   }
 
   if ('keepShopping' in data) {
-    state.bag.clear();
     state.checkoutStep = 0;
     renderBag();
     closeBag();

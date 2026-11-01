@@ -2,11 +2,21 @@
    Base: design tokens, reset, shared typography, buttons and animations
    ========================================================================== */
 
+/* Stand-in while Archivo loads: bold Arial shrunk to Archivo's narrow width,
+   so headlines wrap the same way and the page doesn't jump when the font arrives. */
+@font-face {
+  font-family: "Archivo Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("Arial");
+  font-weight: 800 900;
+  size-adjust: 82%;
+}
+
 :root {
   /* Brand palette */
   --espresso: #2A1A14;
   --cream: #F6EEE3;
   --terracotta: #D2582F;
+  --terracotta-deep: #B4471F; /* for text on terracotta, or terracotta text: 4.7:1 on cream */
   --saffron: #F2A93B;
   --clay: #E7C9A9;
   --rust: #9E3F24;
@@ -15,7 +25,7 @@
   --cocoa: #6B4130;
 
   /* Supporting neutrals */
-  --text-muted: #8C7466;
+  --text-muted: #755E50; /* 5.3:1 on cream */
   --text-on-dark: #D9C8B8;
   --line: #E2D5C7;
   --line-strong: #CDBCAA;
@@ -23,7 +33,7 @@
   --shadow: rgba(42, 26, 20, 0.35);
 
   /* Type */
-  --font-display: "Archivo", "Arial Narrow", Arial, sans-serif;
+  --font-display: "Archivo", "Archivo Fallback", sans-serif;
   --font-body: "DM Sans", -apple-system, "Helvetica Neue", Arial, sans-serif;
 
   /* Layout */
@@ -93,8 +103,50 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
+/* Read by screen readers, not shown. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 [hidden] {
   display: none !important;
+}
+
+/* ----- Accessibility helpers ----- */
+
+/* Hidden until focused with the keyboard, then shown top-left. */
+.skip-link {
+  position: absolute;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  left: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 99px;
+  background: var(--saffron);
+  color: var(--espresso);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+.noscript-note {
+  padding: 16px;
+  background: var(--saffron);
+  color: var(--espresso);
+  font-weight: 700;
+  text-align: center;
 }
 
 /* ----- Layout helpers ----- */
@@ -137,7 +189,7 @@ select:focus-visible {
 }
 
 .button--primary {
-  background: var(--terracotta);
+  background: var(--terracotta-deep);
   color: var(--cream);
 }
 
@@ -188,7 +240,7 @@ select:focus-visible {
 }
 
 .link-button--muted:hover {
-  color: var(--terracotta);
+  color: var(--terracotta-deep);
 }
 
 /* ----- Shared animations ----- */

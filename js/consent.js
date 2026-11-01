@@ -13,6 +13,7 @@
 import { $, readStorage, writeStorage, removeStorage } from './dom.js';
 import { emit } from './events.js';
 import { showToast } from './toast.js';
+import { openDialog, closeDialog } from './focus.js';
 
 const COOKIE_NAME = 'nm_consent';
 const SCHEMA_VERSION = 2; // bump when the stored shape changes; older choices re-prompt
@@ -56,6 +57,23 @@ let savedConsent = readConsent();
 if (savedConsent) region = savedConsent.region;
 
 /** The visitor's saved choice, or null if they haven't chosen yet. */
+/**
+ * True when it's fair to ask for consent at checkout: the visitor hasn't made
+ * any choice yet and their browser isn't sending Global Privacy Control.
+ *
+ * Visitors who already declined or opted out are never asked again here:
+ * repeated prompting after a refusal undermines GDPR consent, and the CCPA
+ * requires waiting 12 months after an opt-out before asking again.
+ */
+export function canAskAtCheckout() {
+  return !savedConsent && !globalPrivacyControl;
+}
+
+/** Record a choice made outside the cookie prompt (e.g. the checkout ask). */
+export function recordConsentChoice({ allow, method }) {
+  saveChoice({ analytics: allow, advertising: allow, method });
+}
+
 export function getConsent() {
   return savedConsent;
 }
@@ -214,11 +232,13 @@ function openPreferences() {
 
   renderRegionCopy();
   $('#privacy-modal').hidden = false;
-  $('#privacy-save').focus();
+  openDialog($('#privacy-modal'), $('#privacy-save'));
 }
 
 function closePreferences() {
+  if ($('#privacy-modal').hidden) return;
   $('#privacy-modal').hidden = true;
+  closeDialog($('#privacy-modal'));
 }
 
 /* ----- Setup ----- */
