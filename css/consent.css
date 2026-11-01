@@ -134,8 +134,10 @@
   transform: none;
 }
 
-/* Hidden while the footer is on screen (it has its own cookie links). */
-.consent-fab.is-tucked {
+/* Hidden while the footer is on screen (it has its own cookie links)
+   and while the bag drawer is open (it would cover the checkout). */
+.consent-fab.is-tucked,
+body.bag-is-open .consent-fab {
   transform: scale(0) rotate(120deg);
 }
 

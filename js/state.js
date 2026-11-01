@@ -22,4 +22,11 @@ export const state = {
   /** Index into CHECKOUT_STEPS in bag.js. */
   checkoutStep: 0,
   orderId: null,
+
+  /**
+   * Contact and shipping details entered at checkout (email, name, phone,
+   * street, city, region, postcode, country). Reset after each order.
+   * Kept out of event payloads; future adapters read it to hash for matching.
+   */
+  customer: {},
 };

@@ -1,14 +1,22 @@
 /**
  * Bag drawer and the simulated checkout.
  * Steps: bag → contact → shipping → payment → confirmation.
+ *
+ * Contact and shipping forms are prefilled with a fresh fake shopper per order
+ * (see demo-shopper.js). What the shopper submits is kept in state.customer for
+ * future tracking adapters; it is never put into event payloads here.
  */
-import { $, $$ } from './dom.js';
+import { $, $$, escapeHtml } from './dom.js';
 import { state } from './state.js';
 import { emit, on } from './events.js';
 import { formatPrice, shippingCost } from './currency.js';
 import { COLORS, CARD_BACKGROUNDS, GENDER_LABELS, findProduct } from './catalog.js';
 import { garmentMarkup } from './garment.js';
 import { getSelection } from './selection.js';
+import { createDemoShopper } from './demo-shopper.js';
+import {
+  validateCard, isDeclinedTestCard, detectCardBrand, formatCardNumber,
+} from './card-validation.js';
 
 const CHECKOUT_STEPS = [
   { id: 'bag',      title: 'Your Bag',  nextLabel: 'Checkout →' },
@@ -23,12 +31,46 @@ export function initBag() {
   $('#bag-close').addEventListener('click', closeBag);
   $('#bag-scrim').addEventListener('click', closeBag);
   $('#bag-body').addEventListener('click', handleBagClick);
+  $('#bag-body').addEventListener('input', handlePaymentInput);
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeBag();
   });
 
   on('currency_changed', renderBag);
   renderBag();
+}
+
+/* ----- Demo shopper ----- */
+
+let demoShopper = null;
+let demoShopperRequest = null;
+
+/** Start fetching a fake shopper in the background (once per order). */
+function prepareDemoShopper() {
+  if (demoShopper || demoShopperRequest) return;
+
+  demoShopperRequest = createDemoShopper().then((shopper) => {
+    demoShopper = shopper;
+    demoShopperRequest = null;
+
+    // If a form is already showing empty fields, fill it in now.
+    const stepId = CHECKOUT_STEPS[state.checkoutStep].id;
+    if (stepId === 'contact' || stepId === 'shipping') renderBag();
+  });
+}
+
+function shuffleDemoShopper() {
+  demoShopper = null;
+  demoShopperRequest = null;
+  prepareDemoShopper();
+  renderBag();
+}
+
+/** Save what's in the current form (the shopper may have edited it). */
+function saveFormValues() {
+  $$('#bag-body form [name]').forEach((field) => {
+    state.customer[field.name] = field.value.trim();
+  });
 }
 
 /* ----- Bag contents ----- */
@@ -101,6 +143,7 @@ function changeQuantity(key, delta) {
 /* ----- Drawer ----- */
 
 export function openBag() {
+  prepareDemoShopper();
   document.body.classList.add('bag-is-open');
   $('#bag-drawer').setAttribute('aria-hidden', 'false');
   renderBag();
@@ -155,6 +198,7 @@ function totalsMarkup({ nextLabel, nextDisabled = false }) {
       <div class="bag-totals__row bag-totals__row--total"><span>Total</span><span>${formatPrice(itemsTotal + shipping, state.currency)}</span></div>
       <button type="button" class="checkout-next" data-checkout-next ${nextDisabled ? 'disabled' : ''}>${nextLabel}</button>
       ${backButton}
+      <button type="button" class="checkout-continue" data-continue-shopping>Continue shopping</button>
       <p class="checkout-note">Demo store · no real payment taken</p>
     </div>`;
 }
@@ -188,46 +232,174 @@ function bagLineMarkup({ key, product, color, size, quantity }) {
     </div>`;
 }
 
+/** Value for a prefilled field: what the shopper typed, else the demo shopper, else blank. */
+function fieldValue(name, demoValue) {
+  return escapeHtml(state.customer[name] ?? demoValue ?? '');
+}
+
+function demoShopperNote() {
+  if (!demoShopper) return '<p class="demo-shopper-note">Generating demo shopper details…</p>';
+  return `<p class="demo-shopper-note">Demo details near ${escapeHtml(demoShopper.city)}.
+    <button type="button" class="link-button" data-shuffle-shopper>Shuffle</button></p>`;
+}
+
 function contactStepMarkup() {
+  const shopper = demoShopper ?? {};
+  const fullName = shopper.firstName ? `${shopper.firstName} ${shopper.lastName}` : '';
+
   return `
+    ${demoShopperNote()}
     <form class="checkout-form">
-      <label for="checkout-email">Email<input id="checkout-email" type="email" required value="alex@example.com"></label>
-      <label for="checkout-name">Full name<input id="checkout-name" required value="Alex Rivera"></label>
+      <label for="checkout-email">Email
+        <input id="checkout-email" name="email" type="email" required autocomplete="email" value="${fieldValue('email', shopper.email)}">
+      </label>
+      <label for="checkout-name">Full name
+        <input id="checkout-name" name="name" required autocomplete="name" value="${fieldValue('name', fullName)}">
+      </label>
+      <label for="checkout-phone">Phone
+        <input id="checkout-phone" name="phone" type="tel" autocomplete="tel" value="${fieldValue('phone', shopper.phone)}">
+      </label>
     </form>
     ${totalsMarkup({ nextLabel: CHECKOUT_STEPS[1].nextLabel })}`;
 }
 
+const SHIPPING_COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Germany', 'Japan'];
+
+function countryOptions(selected) {
+  const countries = SHIPPING_COUNTRIES.includes(selected) || !selected
+    ? SHIPPING_COUNTRIES
+    : [selected, ...SHIPPING_COUNTRIES];
+
+  return countries.map((country) => `
+    <option ${country === selected ? 'selected' : ''}>${escapeHtml(country)}</option>
+  `).join('');
+}
+
 function shippingStepMarkup() {
+  const shopper = demoShopper ?? {};
+  const country = state.customer.country ?? shopper.country;
+
   return `
+    ${demoShopperNote()}
     <form class="checkout-form">
-      <label for="checkout-address">Address<input id="checkout-address" required value="214 Dekalb Ave"></label>
-      <div class="checkout-form__row">
-        <label for="checkout-city">City<input id="checkout-city" required value="Brooklyn"></label>
-        <label for="checkout-postcode">Postal code<input id="checkout-postcode" required value="11205"></label>
-      </div>
-      <label for="checkout-country">Country
-        <select id="checkout-country">
-          <option>United States</option>
-          <option>Canada</option>
-          <option>United Kingdom</option>
-          <option>Germany</option>
-          <option>Japan</option>
-        </select>
+      <label for="checkout-address">Address
+        <input id="checkout-address" name="street" required autocomplete="street-address" value="${fieldValue('street', shopper.street)}">
       </label>
+      <div class="checkout-form__row">
+        <label for="checkout-city">City
+          <input id="checkout-city" name="city" required autocomplete="address-level2" value="${fieldValue('city', shopper.city)}">
+        </label>
+        <label for="checkout-region">State / region
+          <input id="checkout-region" name="region" autocomplete="address-level1" value="${fieldValue('region', shopper.region)}">
+        </label>
+      </div>
+      <div class="checkout-form__row">
+        <label for="checkout-postcode">Postal code
+          <input id="checkout-postcode" name="postcode" required autocomplete="postal-code" value="${fieldValue('postcode', shopper.postcode)}">
+        </label>
+        <label for="checkout-country">Country
+          <select id="checkout-country" name="country" autocomplete="country-name">${countryOptions(country)}</select>
+        </label>
+      </div>
     </form>
     ${totalsMarkup({ nextLabel: CHECKOUT_STEPS[2].nextLabel })}`;
 }
 
+/*
+ * Payment fields deliberately have no `name`, so saveFormValues() never stores
+ * card details. They're only checked locally (card-validation.js).
+ */
 function paymentStepMarkup() {
   return `
-    <form class="checkout-form">
-      <label for="checkout-card">Card number<input id="checkout-card" inputmode="numeric" value="4242 4242 4242 4242"></label>
+    <p class="demo-shopper-note">Test cards: 4242 4242 4242 4242 is approved, 4000 0000 0000 0002 is declined.</p>
+    <form class="checkout-form" novalidate>
+      <label for="checkout-card">Card number <span class="card-brand" id="card-brand">Visa</span>
+        <input id="checkout-card" inputmode="numeric" autocomplete="cc-number" value="4242 4242 4242 4242" aria-describedby="payment-error">
+      </label>
       <div class="checkout-form__row">
-        <label for="checkout-expiry">Expiry<input id="checkout-expiry" value="12/28"></label>
-        <label for="checkout-cvc">CVC<input id="checkout-cvc" value="123"></label>
+        <label for="checkout-expiry">Expiry (MM/YY)
+          <input id="checkout-expiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" value="12/28" aria-describedby="payment-error">
+        </label>
+        <label for="checkout-cvc">CVC
+          <input id="checkout-cvc" inputmode="numeric" autocomplete="cc-csc" value="123" aria-describedby="payment-error">
+        </label>
       </div>
+      <p class="payment-error" id="payment-error" role="alert" hidden></p>
     </form>
     ${totalsMarkup({ nextLabel: CHECKOUT_STEPS[3].nextLabel })}`;
+}
+
+const PAYMENT_FIELDS = {
+  number: '#checkout-card',
+  expiry: '#checkout-expiry',
+  cvc: '#checkout-cvc',
+};
+
+function showPaymentError(fieldKey, message) {
+  const error = $('#payment-error');
+  error.textContent = message;
+  error.hidden = false;
+
+  const field = fieldKey && $(PAYMENT_FIELDS[fieldKey]);
+  field?.setAttribute('aria-invalid', 'true');
+  field?.focus();
+}
+
+function clearPaymentError() {
+  const error = $('#payment-error');
+  if (error) error.hidden = true;
+  Object.values(PAYMENT_FIELDS).forEach((selector) => $(selector)?.removeAttribute('aria-invalid'));
+}
+
+/** Validate the card locally. Returns true when the order can be placed. */
+function checkPayment() {
+  clearPaymentError();
+
+  const number = $('#checkout-card').value;
+  const problem = validateCard({
+    number,
+    expiry: $('#checkout-expiry').value,
+    cvc: $('#checkout-cvc').value,
+  });
+
+  // Never include card details in events: only the reason and the brand.
+  const brand = detectCardBrand(number)?.id ?? 'unknown';
+
+  if (problem) {
+    showPaymentError(problem.field, problem.message);
+    emit('payment_failed', { reason: problem.reason, card_brand: brand });
+    return false;
+  }
+
+  if (isDeclinedTestCard(number)) {
+    showPaymentError('number', 'Your card was declined. Try another card.');
+    emit('payment_failed', { reason: 'declined', card_brand: brand });
+    return false;
+  }
+
+  return true;
+}
+
+/** Live formatting while typing: card number groups, MM/YY slash, brand label. */
+function handlePaymentInput(event) {
+  const field = event.target;
+  if (!Object.values(PAYMENT_FIELDS).some((selector) => field.matches(selector))) return;
+
+  clearPaymentError();
+
+  if (field.id === 'checkout-card') {
+    field.value = formatCardNumber(field.value);
+    $('#card-brand').textContent = detectCardBrand(field.value)?.label ?? '';
+  }
+
+  if (field.id === 'checkout-expiry' && event.inputType !== 'deleteContentBackward') {
+    const digits = field.value.replace(/\D/g, '').slice(0, 4);
+    field.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+  }
+
+  if (field.id === 'checkout-cvc') {
+    field.value = field.value.replace(/\D/g, '').slice(0, 4);
+  }
 }
 
 function confirmationMarkup() {
@@ -260,8 +432,16 @@ function placeOrder() {
 function goToNextStep() {
   const form = $('#bag-body form');
   if (form && !form.reportValidity()) return;
+  if (CHECKOUT_STEPS[state.checkoutStep].id === 'payment' && !checkPayment()) return;
+  saveFormValues();
 
-  if (CHECKOUT_STEPS[state.checkoutStep].id === 'payment') placeOrder();
+  if (CHECKOUT_STEPS[state.checkoutStep].id === 'payment') {
+    placeOrder();
+    // The next order gets a brand-new demo shopper.
+    state.customer = {};
+    demoShopper = null;
+    prepareDemoShopper();
+  }
 
   state.checkoutStep += 1;
   const nextStep = CHECKOUT_STEPS[state.checkoutStep];
@@ -281,8 +461,19 @@ function handleBagClick(event) {
   if ('checkoutNext' in data) goToNextStep();
 
   if ('checkoutBack' in data) {
+    saveFormValues();
     state.checkoutStep -= 1;
     renderBag();
+  }
+
+  if ('continueShopping' in data) {
+    saveFormValues();
+    closeBag();
+  }
+
+  if ('shuffleShopper' in data) {
+    state.customer = {};
+    shuffleDemoShopper();
   }
 
   if ('keepShopping' in data) {

@@ -196,6 +196,36 @@ body.bag-is-open .bag-drawer {
   text-align: center;
 }
 
+.checkout-continue {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1.5px solid var(--espresso);
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.checkout-continue:hover {
+  background: var(--espresso);
+  color: var(--cream);
+}
+
+.demo-shopper-note {
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--line);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.demo-shopper-note .link-button {
+  margin-left: 4px;
+  color: var(--terracotta);
+}
+
 .checkout-note {
   margin-top: 10px;
   font-size: 12px;
@@ -221,8 +251,14 @@ body.bag-is-open .bag-drawer {
   color: var(--text-muted);
 }
 
+.checkout-form label {
+  min-width: 0;
+}
+
 .checkout-form input,
 .checkout-form select {
+  width: 100%;
+  min-width: 0;
   padding: 12px 14px;
   border: 1px solid var(--line-strong);
   border-radius: 12px;
@@ -237,6 +273,28 @@ body.bag-is-open .bag-drawer {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+/* ----- Payment ----- */
+
+.card-brand {
+  float: right;
+  color: var(--terracotta);
+  letter-spacing: 0.04em;
+}
+
+.checkout-form input[aria-invalid="true"] {
+  border-color: var(--rust);
+  box-shadow: 0 0 0 2px rgba(158, 63, 36, 0.2);
+}
+
+.payment-error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(158, 63, 36, 0.1);
+  color: var(--rust);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 /* ----- Confirmation ----- */

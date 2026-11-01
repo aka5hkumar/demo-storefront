@@ -36,6 +36,8 @@ js/
   shop.js                   filters, grid, swatches, sizes, pagination
   bag.js                    bag drawer and simulated checkout
   hero.js                   random hero product + price tag
+  demo-shopper.js           fake shopper details for checkout, localised by IP
+  card-validation.js        local card checks: issuer prefix/length, Luhn, expiry, CVC
   consent.js                region-aware cookie consent
   info.js                   footer Help / Shipping / Returns dialogs
   toast.js                  status messages
@@ -70,6 +72,7 @@ as `[nm] name {payload}`. Prices are integers in minor units with an ISO currenc
 | `add_to_cart` / `remove_from_cart` | card, hero tag or bag quantity buttons |
 | `cart_opened` | bag drawer opened |
 | `checkout_step` | contact, shipping, payment reached |
+| `payment_failed` | card failed local checks or was the declined test card (reason + brand only) |
 | `order_placed` | order confirmed (`id` = order number, for deduplication) |
 | `currency_changed` | currency picker |
 | `consent_changed` / `consent_reset` | cookie choice saved or reset |
@@ -77,6 +80,18 @@ as `[nm] name {payload}`. Prices are integers in minor units with an ISO currenc
 
 Tracking adapters should check `getConsent()` (also `window.nmConsent()`)
 before sending anything.
+
+## Demo checkout details
+
+Each order prefills the contact and shipping forms with a fresh fake shopper so
+test conversion events are unique. When the bag opens, `js/demo-shopper.js` calls:
+
+- `ipwho.is` (fallback `get.geojs.io`) for the visitor's approximate location from their IP
+- OpenStreetMap Nominatim reverse geocoding for a real street ~1 km away
+- `randomuser.me` for a name, phone and an `@example.com` email in the visitor's country
+
+Every call has a 4-second timeout and a local fallback. Submitted values are kept
+in `state.customer` and never put into event payloads.
 
 ## Cookie consent
 
