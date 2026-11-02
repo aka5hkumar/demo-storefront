@@ -181,11 +181,28 @@
 
     <!-- ===== Promo band ===== -->
     <section class="promo page-gutter">
-      <div>
+      <div class="promo__copy">
         <h2 class="display">Built for<br>every pace.</h2>
         <p class="promo__facts">Free shipping over $100 · 30-day returns · Ships to 40+ countries</p>
+        <a class="button button--dark" href="#shop">Shop all gear →</a>
       </div>
-      <a class="button button--dark" href="#shop">Shop all gear →</a>
+
+      <!-- Motion Club card: garments fill in from js/membership.js -->
+      <aside class="club-card" aria-labelledby="club-card-title">
+        <div class="club-card__box" aria-hidden="true">
+          <div class="club-card__items" id="club-card-items"></div>
+          <div class="club-card__crate"><span>MOTION CLUB</span></div>
+        </div>
+        <div class="club-card__body">
+          <span class="club-card__eyebrow">New · <span id="club-card-ship"></span></span>
+          <h3 class="display" id="club-card-title">A new piece, every month.</h3>
+          <p>From the latest drop, in your size, picked for how you train. Swap anything free; skip or cancel any month.</p>
+          <div class="club-card__actions">
+            <button type="button" class="button button--primary" data-open-club data-club-option="trial" data-club-source="promo">Try 14 days free</button>
+            <button type="button" class="link-button club-card__join" data-open-club data-club-option="monthly" data-club-source="promo">or join for <span id="club-card-price"></span>/mo</button>
+          </div>
+        </div>
+      </aside>
     </section>
   </main>
 

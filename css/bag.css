@@ -28,7 +28,6 @@
     calc(24px + env(safe-area-inset-bottom, 0px))
     24px;
   background: var(--cream);
-  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.25);
   transform: translateX(100%);
   transition: transform 0.45s var(--ease-out);
 }
@@ -40,6 +39,8 @@ body.bag-is-open .scrim {
 
 body.bag-is-open .bag-drawer {
   transform: none;
+  /* Only while open: on the closed, off-screen drawer it spilled onto the page edge. */
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.25);
 }
 
 .bag-drawer__header {

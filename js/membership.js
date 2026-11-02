@@ -14,7 +14,8 @@ import { $, escapeHtml } from './dom.js';
 import { state } from './state.js';
 import { emit, on } from './events.js';
 import { formatPrice } from './currency.js';
-import { CLUB } from './catalog.js';
+import { CLUB, findProduct } from './catalog.js';
+import { garmentMarkup } from './garment.js';
 import { openDialog, closeDialog, isDialogOpen } from './focus.js';
 import { createDemoShopper } from './demo-shopper.js';
 import { validateCard, isDeclinedTestCard, detectCardBrand, formatCardNumber } from './card-validation.js';
@@ -41,6 +42,33 @@ function renderBanner() {
   const text = `NEW: MOTION CLUB ✦ FRESH GEAR SHIPPED MONTHLY ✦ ${price().toUpperCase()}/MONTH ✦ TRY IT FREE FOR ${CLUB.trialDays} DAYS ✦ `;
   $('#club-banner-track').textContent = text + text; // twice, for a seamless loop
   $('#club-banner').setAttribute('aria-label', `Motion Club: new gear shipped monthly, ${price()} a month. Start a free ${CLUB.trialDays}-day trial`);
+}
+
+/* ----- Promo card ----- */
+
+/** Three pieces peeking out of the monthly box (the art is decorative). */
+const CARD_PICKS = [
+  ['YOG-LG-W', 'olive'],
+  ['CKE-TEE-W', 'terracotta'],
+  ['RUN-JK-M', 'espresso'],
+];
+
+/** Boxes ship on the 1st: the next one is the 1st of next month. */
+function nextShipDate(today = new Date()) {
+  const date = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function renderCard() {
+  const items = $('#club-card-items');
+  if (!items) return;
+  if (!items.childElementCount) {
+    items.innerHTML = CARD_PICKS
+      .map(([sku, color], index) => `<span class="club-card__item club-card__item--${index + 1}">${garmentMarkup(findProduct(sku), color)}</span>`)
+      .join('');
+  }
+  $('#club-card-ship').textContent = `next box ships ${nextShipDate()}`;
+  $('#club-card-price').textContent = price();
 }
 
 /* ----- Dialog markup ----- */
@@ -117,10 +145,11 @@ function render() {
 
 /* ----- Open / close ----- */
 
-export function openClub(source = 'banner') {
+export function openClub(source = 'banner', preferredOption) {
   const modal = $('#club-modal');
   if (!isDialogOpen(modal)) {
     memberId = null;
+    if (CLUB.plans[preferredOption]) option = preferredOption;
     render();
     modal.hidden = false;
     openDialog(modal, $('#club-close'));
@@ -236,12 +265,14 @@ function handleChange(event) {
 export function initMembership() {
   const modal = $('#club-modal');
   renderBanner();
+  renderCard();
 
   $('#club-banner').addEventListener('click', () => openClub('banner'));
   document.addEventListener('click', (event) => {
-    if (event.target.closest('[data-open-club]')) {
+    const opener = event.target.closest('[data-open-club]');
+    if (opener) {
       event.preventDefault();
-      openClub('nav');
+      openClub(opener.dataset.clubSource ?? 'nav', opener.dataset.clubOption);
     }
   });
 
@@ -257,6 +288,7 @@ export function initMembership() {
 
   on('currency_changed', () => {
     renderBanner();
+    renderCard();
     if (!modal.hidden && !memberId) render();
   });
 
