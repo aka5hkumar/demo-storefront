@@ -1,0 +1,29 @@
+name = "nano-motion-capi"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Served only at https://capi.akash.app (Cloudflare manages its DNS and certificate).
+routes = [{ pattern = "capi.akash.app", custom_domain = true }]
+workers_dev = false     # no *.workers.dev address
+preview_urls = false    # no per-version preview addresses
+
+# Logs (console.log / console.error) show in the dashboard and `wrangler tail`.
+[observability]
+enabled = true
+
+[vars]
+# Comma-separated origins allowed to call the relay.
+ALLOWED_ORIGINS = "https://store.akash.app,http://localhost:8080"
+
+# Identifies this integration in OpenAI requests (1–64 chars: letters, digits, . _ -).
+INTEGRATION_SOURCE = "nano-motion-relay"
+
+# "true" = OpenAI validates events without recording them. Flip to "false" when ready.
+VALIDATE_ONLY = "false"
+
+# Secrets (not in this file):
+#   npx wrangler secret put OPENAI_PIXEL_ID
+#   npx wrangler secret put OPENAI_CONVERSIONS_API_KEY
+#   npx wrangler secret put OPENAI_PIXEL_ID_2               (optional second pixel)
+#   npx wrangler secret put OPENAI_CONVERSIONS_API_KEY_2    (optional; defaults to the first key)
+# For `wrangler dev`, put them in .dev.vars instead (see .dev.vars.example).

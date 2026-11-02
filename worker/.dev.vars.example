@@ -1,0 +1,6 @@
+# Copy to .dev.vars for `npm run dev`. Never commit .dev.vars.
+OPENAI_PIXEL_ID=your-pixel-id
+OPENAI_CONVERSIONS_API_KEY=your-conversions-api-key
+# Optional second pixel. Leave the key out to reuse the first key.
+# OPENAI_PIXEL_ID_2=second-pixel-id
+# OPENAI_CONVERSIONS_API_KEY_2=second-conversions-api-key

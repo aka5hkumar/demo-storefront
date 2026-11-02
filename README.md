@@ -62,7 +62,8 @@ tests/
   serve.mjs                 static server for local runs and the tests
   unit/                     node --test: card checks, currency, search
   e2e/                      Playwright: shop, quick view, checkout, consent, tracking, layout
-.github/workflows/tests.yml runs both on every push and pull request
+worker/                     Cloudflare Worker: server-side relay for conversion events (own README)
+.github/workflows/tests.yml runs the storefront and Worker tests on every push and pull request
 assets/
   brand/                      favicon.svg, PNG icons, apple-touch-icon, og-image (link previews), site.webmanifest
   garments/{name}.svg         garment silhouette
