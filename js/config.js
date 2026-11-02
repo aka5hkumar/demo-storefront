@@ -13,8 +13,8 @@
 export const PIXEL_IDS = [
   // 'pixel-id-1',
   // 'pixel-id-2',
-	'Atniqn5shCqiSTjXQNBGi8',
-	'YaxrwfU3E1wM1fLC6Ws1ua'
+	'Atniqn5shCqiSTjXQNBGi8', //Akash Pixel
+	'YaxrwfU3E1wM1fLC6Ws1ua' //OpenAI Pixel
 ];
 export const PIXEL_SCRIPT_URL = 'https://bzrcdn.openai.com/sdk/oaiq.min.js';
 export const PIXEL_DEBUG = false;
@@ -24,4 +24,4 @@ export const PIXEL_DEBUG = false;
  * events to the Conversions API. The Worker holds the Pixel IDs and API keys.
  * Leave empty until it's deployed.
  */
-export const CONVERSIONS_RELAY_URL = '';
+export const CONVERSIONS_RELAY_URL = 'https://capi.akash.app/events';

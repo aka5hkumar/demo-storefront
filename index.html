@@ -7,7 +7,7 @@
     Content Security Policy: the only places this page may load code, styles,
     fonts and data from. Anything else is blocked by the browser.
     The OpenAI pixel hosts are already allowed (bzrcdn = SDK and config,
-    bzr = events). When the relay is deployed, add its origin to connect-src.
+    bzr = events). capi.akash.app is the Conversions API relay (Cloudflare Worker).
   -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
@@ -15,7 +15,7 @@
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src https://fonts.gstatic.com;
     img-src 'self' data: https://bzr.openai.com;
-    connect-src 'self' https://bzr.openai.com https://bzrcdn.openai.com https://ipwho.is https://get.geojs.io https://nominatim.openstreetmap.org https://randomuser.me;
+    connect-src 'self' https://capi.akash.app https://bzr.openai.com https://bzrcdn.openai.com https://ipwho.is https://get.geojs.io https://nominatim.openstreetmap.org https://randomuser.me;
     manifest-src 'self';
     object-src 'none';
     base-uri 'self';
