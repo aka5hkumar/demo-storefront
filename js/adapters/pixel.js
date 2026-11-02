@@ -2,7 +2,11 @@
  * Browser pixel: loads the ad platform's measurement SDK and sends every
  * conversion event from the browser.
  *
- * Off until PIXEL_ID and PIXEL_SCRIPT_URL are set in config.js.
+ * Off until PIXEL_IDS (and PIXEL_SCRIPT_URL) are set in config.js.
+ *
+ * - Several Pixel IDs: the SDK loads once, each ID is initialised, and every
+ *   `measure` call goes to all of them. Deduplication is per Pixel ID, so the
+ *   same event id on each pixel is correct.
  *
  * - Same event ids as the server relay (conversion-events.js), so an event
  *   sent through both is counted once.
@@ -15,7 +19,7 @@
 import { on } from '../events.js';
 import { state } from '../state.js';
 import { getConsent } from '../consent.js';
-import { PIXEL_ID, PIXEL_SCRIPT_URL, PIXEL_DEBUG } from '../config.js';
+import { PIXEL_IDS, PIXEL_SCRIPT_URL, PIXEL_DEBUG } from '../config.js';
 import { createEventDescriber, hashCustomer } from './conversion-events.js';
 
 /**
@@ -76,14 +80,16 @@ function pixelUser(hashed) {
 }
 
 export function installPixel() {
-  if (!PIXEL_ID || !PIXEL_SCRIPT_URL) return;
+  const pixelIds = PIXEL_IDS.filter(Boolean);
+  if (!pixelIds.length || !PIXEL_SCRIPT_URL) return;
 
   const sdk = loadSdk();
   const describe = createEventDescriber();
 
   // Consent first, so nothing is measured before the visitor has agreed.
   sdk('consent', getConsent()?.advertising === true);
-  sdk('init', { pixelId: PIXEL_ID, debug: PIXEL_DEBUG });
+  // Initialise every pixel up front: a pixel initialised later misses earlier events.
+  pixelIds.forEach((pixelId) => sdk('init', { pixelId, debug: PIXEL_DEBUG }));
 
   on('consent_changed', (event) => sdk('consent', event.advertising === true));
 
@@ -100,10 +106,14 @@ export function installPixel() {
     }
 
     // Copy checkout details now (bag.js clears them right after order_placed),
-    // add them to the SDK for matching, then measure the order.
+    // add them to each pixel for matching, then measure the order. With more
+    // than one pixel, OpenAI requires the pixelId on every user update.
     const customerSnapshot = { ...state.customer };
     hashCustomer(customerSnapshot)
-      .then((hashed) => sdk('init', { pixelId: PIXEL_ID, user: pixelUser(hashed) }))
+      .then((hashed) => {
+        const user = pixelUser(hashed);
+        pixelIds.forEach((pixelId) => sdk('init', { pixelId, user }));
+      })
       .catch(() => { /* measure without matching details */ })
       .finally(measure);
   });

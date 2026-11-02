@@ -6,17 +6,16 @@
   <!--
     Content Security Policy: the only places this page may load code, styles,
     fonts and data from. Anything else is blocked by the browser.
-    When the pixel or relay is switched on (js/config.js), add their hosts here:
-    the pixel's script host to script-src, its endpoint hosts to connect-src
-    and img-src, and the relay's origin to connect-src.
+    The OpenAI pixel hosts are already allowed (bzrcdn = SDK and config,
+    bzr = events). When the relay is deployed, add its origin to connect-src.
   -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
-    script-src 'self';
+    script-src 'self' https://bzrcdn.openai.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src https://fonts.gstatic.com;
-    img-src 'self' data:;
-    connect-src 'self' https://ipwho.is https://get.geojs.io https://nominatim.openstreetmap.org https://randomuser.me;
+    img-src 'self' data: https://bzr.openai.com;
+    connect-src 'self' https://bzr.openai.com https://bzrcdn.openai.com https://ipwho.is https://get.geojs.io https://nominatim.openstreetmap.org https://randomuser.me;
     manifest-src 'self';
     object-src 'none';
     base-uri 'self';

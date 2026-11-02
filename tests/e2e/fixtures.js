@@ -15,12 +15,12 @@ import { test as base, expect } from '@playwright/test';
 
 const BLOCKED_LOOKUPS = /ipwho\.is|get\.geojs\.io|nominatim\.openstreetmap\.org|randomuser\.me/;
 
-export const PIXEL_ID = 'px_test';
+export const PIXEL_IDS = ['px_test_a', 'px_test_b'];
 const SDK_URL = 'https://sdk.test/sdk.js';
 const RELAY_URL = 'https://relay.test/events';
 
 const TRACKING_CONFIG = `
-export const PIXEL_ID = '${PIXEL_ID}';
+export const PIXEL_IDS = ${JSON.stringify(PIXEL_IDS)};
 export const PIXEL_SCRIPT_URL = '${SDK_URL}';
 export const PIXEL_DEBUG = false;
 export const CONVERSIONS_RELAY_URL = '${RELAY_URL}';

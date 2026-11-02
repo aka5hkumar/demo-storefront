@@ -119,14 +119,16 @@ ad platform counts each one once:
 | `checkout_step` (contact) | `checkout_started` |
 | `order_placed` | `order_created` (id = order number) |
 
-- **Browser pixel** (`js/adapters/pixel.js`): set `PIXEL_ID` and `PIXEL_SCRIPT_URL`
-  in `js/config.js`. Consent starts off unless advertising consent was given and
+- **Browser pixel** (`js/adapters/pixel.js`): add the Pixel IDs to `PIXEL_IDS` in
+  `js/config.js` (one or more; every event goes to each). The CSP already allows
+  OpenAI's hosts. Consent starts off unless advertising consent was given and
   follows `consent_changed`. On the purchase, the shopper's email, phone and
   names are SHA-256 hashed in the browser and added for matching.
 - **Server relay** (`js/adapters/capi-relay.js`): set `CONVERSIONS_RELAY_URL` once
   the Cloudflare Worker is deployed. Sends nothing without advertising consent.
 
 Both are off by default; with nothing configured the site makes no tracking calls.
+Once Pixel IDs are set, the browser tests also send real events to them.
 
 ## Saved bag
 

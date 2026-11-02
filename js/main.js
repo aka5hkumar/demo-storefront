@@ -34,7 +34,7 @@ state.currency = loadSavedCurrency();
 
 // Tracking adapters first, so they see every event below.
 installConsoleLogger();
-installPixel();             // off until PIXEL_ID / PIXEL_SCRIPT_URL are set in config.js
+installPixel();             // off until PIXEL_IDS is set in config.js
 installConversionsRelay();  // off until CONVERSIONS_RELAY_URL is set in config.js
 initConsent();
 initInfoDialogs();

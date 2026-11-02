@@ -3,7 +3,7 @@
  * Checks the things that matter for measurement: consent gating, matching
  * event ids across both paths, and matching details only with consent.
  */
-import { test, expect, openStore, cards, PIXEL_ID } from './fixtures.js';
+import { test, expect, openStore, cards, PIXEL_IDS } from './fixtures.js';
 
 test.use({ tracking: true });
 
@@ -26,9 +26,10 @@ async function buyFirstProduct(page) {
 test('pixel starts with consent off, then follows the visitor\'s choice', async ({ page }) => {
   await openStore(page, { consent: null });
   await expect.poll(() => sdkCalls(page)).toContainEqual(['consent', false]);
-  const [first, second] = await sdkCalls(page);
+  const [first, ...rest] = await sdkCalls(page);
   expect(first).toEqual(['consent', false]); // consent before init
-  expect(second).toEqual(['init', { pixelId: PIXEL_ID, debug: false }]);
+  // Every pixel is initialised up front, in order.
+  expect(rest.slice(0, PIXEL_IDS.length)).toEqual(PIXEL_IDS.map((pixelId) => ['init', { pixelId, debug: false }]));
 
   await page.locator('[data-consent-action="accept"]').click();
   await expect.poll(() => sdkCalls(page)).toContainEqual(['consent', true]);
@@ -51,12 +52,16 @@ test('a full purchase: same ids on both paths, matching details on the order', a
   // Every relayed event was also sent by the pixel with the same id.
   for (const body of relayed) expect(pixelIds).toContain(body.event?.id ?? body.id);
 
-  // The hashed user init comes right before order_created, never earlier.
-  const userInit = calls.findIndex(([command, options]) => command === 'init' && options.user);
+  // Each pixel gets the hashed user init (with its pixelId) before order_created, never earlier.
   const orderMeasure = calls.findIndex(([command, type]) => command === 'measure' && type === 'order_created');
-  expect(userInit).toBeGreaterThan(-1);
-  expect(userInit).toBeLessThan(orderMeasure);
-  expect(calls[userInit][1].user.email_sha256).toMatch(/^[0-9a-f]{64}$/);
+  const userInits = calls.map((call, index) => [call, index]).filter(([[command, options]]) => command === 'init' && options.user);
+  expect(userInits.map(([[, options]]) => options.pixelId)).toEqual(PIXEL_IDS);
+  for (const [[, options], index] of userInits) {
+    expect(index).toBeLessThan(orderMeasure);
+    expect(options.user.email_sha256).toMatch(/^[0-9a-f]{64}$/);
+  }
+  // One measure per event: the SDK fans it out to every initialised pixel.
+  expect(calls.filter(([command, type]) => command === 'measure' && type === 'order_created')).toHaveLength(1);
 });
 
 test('after a rejection: no relay calls and no matching details', async ({ page, relayed }) => {
