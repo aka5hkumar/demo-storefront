@@ -1,8 +1,8 @@
 /**
  * Shared in-memory state for the storefront.
  *
- * Only the chosen currency is persisted (see currency.js). The bag always
- * starts empty, so every demo session produces fresh add_to_cart events.
+ * Currency is persisted separately (see currency.js); bag.js restores saved
+ * cart lines and their cart/order reference when available.
  */
 export const state = {
   /** Active currency code: USD, EUR, GBP or JPY. */
@@ -23,6 +23,7 @@ export const state = {
 
   /** Index into CHECKOUT_STEPS in bag.js. */
   checkoutStep: 0,
+  /** Stable cart/order reference, created on the first product content view. */
   orderId: null,
 
   /**
@@ -32,3 +33,17 @@ export const state = {
    */
   customer: {},
 };
+
+/** Create a readable, high-entropy cart/order reference. */
+export function createOrderId() {
+  const randomId = crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
+  return `NM-${randomId.toUpperCase()}`;
+}
+
+/** Return the current cart/order reference, creating one when needed. */
+export function ensureOrderId() {
+  state.orderId ??= createOrderId();
+  return state.orderId;
+}

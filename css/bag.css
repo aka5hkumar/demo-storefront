@@ -335,6 +335,18 @@ body.bag-is-open .bag-drawer {
 
 /* ----- Confirmation ----- */
 
+.bag-order-reference {
+  margin: 0 0 14px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.bag-order-reference code {
+  color: var(--text);
+  font-size: 12px;
+  user-select: all;
+}
+
 .order-confirmation {
   padding: 40px 0;
   text-align: center;

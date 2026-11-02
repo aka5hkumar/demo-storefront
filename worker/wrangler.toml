@@ -7,6 +7,24 @@ routes = [{ pattern = "capi.akash.app", custom_domain = true }]
 workers_dev = false     # no *.workers.dev address
 preview_urls = false    # no per-version preview addresses
 
+[[durable_objects.bindings]]
+name = "EVENT_BUFFER"
+class_name = "EventBuffer"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["EventBuffer"]
+
+[[queues.producers]]
+binding = "CAPI_OUTBOUND"
+queue = "nano-motion-capi-outbound"
+
+[[queues.consumers]]
+queue = "nano-motion-capi-outbound"
+max_batch_size = 10
+max_retries = 5
+dead_letter_queue = "nano-motion-capi-dead-letter"
+
 # Logs (console.log / console.error) show in the dashboard and `wrangler tail`.
 [observability]
 enabled = true
@@ -27,3 +45,6 @@ VALIDATE_ONLY = "false"
 #   npx wrangler secret put OPENAI_PIXEL_ID_2               (optional second pixel)
 #   npx wrangler secret put OPENAI_CONVERSIONS_API_KEY_2    (optional; defaults to the first key)
 # For `wrangler dev`, put them in .dev.vars instead (see .dev.vars.example).
+# Create the queues once before the first deployment:
+#   npx wrangler queues create nano-motion-capi-outbound
+#   npx wrangler queues create nano-motion-capi-dead-letter

@@ -7,7 +7,7 @@
  * future tracking adapters; it is never put into event payloads here.
  */
 import { $, $$, escapeHtml, readStorage, writeStorage } from './dom.js';
-import { state } from './state.js';
+import { state, ensureOrderId } from './state.js';
 import { emit, on } from './events.js';
 import { formatPrice, shippingCost } from './currency.js';
 import { COLORS, CARD_BACKGROUNDS, GENDER_LABELS, findProduct, isInStock } from './catalog.js';
@@ -52,7 +52,15 @@ const BAG_STORAGE_KEY = 'nm-bag';
 const BAG_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // forget bags older than 30 days
 
 function saveBag() {
-  writeStorage(BAG_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), lines: [...state.bag.values()] }));
+  if (!state.bag.size) {
+    try { localStorage.removeItem(BAG_STORAGE_KEY); } catch { /* storage may be disabled */ }
+    return;
+  }
+  writeStorage(BAG_STORAGE_KEY, JSON.stringify({
+    savedAt: Date.now(),
+    cartId: state.orderId,
+    lines: [...state.bag.values()],
+  }));
 }
 
 function restoreSavedBag() {
@@ -66,6 +74,13 @@ function restoreSavedBag() {
       if (!product || !product.colors.includes(line.color) || !isInStock(product, line.size)) continue;
       if (!Number.isInteger(line.quantity) || line.quantity < 1) continue;
       state.bag.set(lineKey(line.sku, line.color, line.size), { ...line });
+    }
+
+    if (state.bag.size) {
+      state.orderId = typeof saved.cartId === 'string' && saved.cartId.startsWith('NM-')
+        ? saved.cartId
+        : ensureOrderId();
+      saveBag(); // migrate bags saved before cart IDs were introduced
     }
   } catch {
     /* unreadable saved bag: start empty */
@@ -145,6 +160,8 @@ function lineTrackingDetails(product, color, size) {
 
 /** Add one unit of a product, in its currently selected colour and size, then open the bag. */
 export function addToBag(product, source) {
+  ensureOrderId();
+
   const { color, size } = getSelection(product);
   const key = lineKey(product.sku, color, size);
   const line = state.bag.get(key) ?? { sku: product.sku, color, size, quantity: 0 };
@@ -153,7 +170,7 @@ export function addToBag(product, source) {
   state.bag.set(key, line);
   saveBag();
 
-  emit('add_to_cart', { ...lineTrackingDetails(product, color, size), source });
+  emit('add_to_cart', { ...lineTrackingDetails(product, color, size), cart_id: state.orderId, source });
   bumpBagButton();
 
   state.checkoutStep = 0;
@@ -165,12 +182,18 @@ function changeQuantity(key, delta) {
   if (!line) return;
 
   const product = findProduct(line.sku);
+  const cartId = state.orderId;
   line.quantity += delta;
   if (line.quantity <= 0) state.bag.delete(key);
   saveBag();
 
   const eventName = delta > 0 ? 'add_to_cart' : 'remove_from_cart';
-  emit(eventName, { ...lineTrackingDetails(product, line.color, line.size), source: 'bag_quantity' });
+  emit(eventName, {
+    ...lineTrackingDetails(product, line.color, line.size),
+    cart_id: cartId,
+    source: 'bag_quantity',
+  });
+  if (!state.bag.size) state.orderId = null;
   renderBag();
 }
 
@@ -251,7 +274,11 @@ function bagStepMarkup() {
 
   const consentAsk = lines.length && canAskAtCheckout() ? checkoutConsentMarkup() : '';
 
-  return linesMarkup + consentAsk + totalsMarkup({ nextLabel: CHECKOUT_STEPS[0].nextLabel, nextDisabled: !lines.length });
+  const orderReference = lines.length && state.orderId
+    ? `<p class="bag-order-reference">Cart / order reference: <code>${escapeHtml(state.orderId)}</code></p>`
+    : '';
+
+  return orderReference + linesMarkup + consentAsk + totalsMarkup({ nextLabel: CHECKOUT_STEPS[0].nextLabel, nextDisabled: !lines.length });
 }
 
 /**
@@ -473,10 +500,11 @@ function confirmationMarkup() {
 /* ----- Checkout navigation ----- */
 
 function placeOrder() {
-  state.orderId = `NM-${Date.now().toString(36).toUpperCase()}`;
+  ensureOrderId();
 
   emit('order_placed', {
     id: state.orderId, // stable id so a server-side copy can be deduplicated
+    cart_id: state.orderId,
     items: bagLines().map(({ product, color, size, quantity }) => ({
       sku: product.sku,
       color,
@@ -547,6 +575,7 @@ function handleBagClick(event) {
 
   if ('keepShopping' in data) {
     state.checkoutStep = 0;
+    state.orderId = null;
     renderBag();
     closeBag();
   }

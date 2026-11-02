@@ -128,6 +128,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+.quick-view__order-reference {
+  margin: -8px 0 14px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.quick-view__order-reference code {
+  color: var(--text);
+  font-size: 11px;
+  user-select: all;
+}
+
 .quick-view__description {
   margin-top: 10px;
   font-size: 15px;

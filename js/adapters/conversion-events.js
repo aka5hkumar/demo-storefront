@@ -7,7 +7,7 @@
  *   product_viewed (first per SKU)  →   contents_viewed   (quick view opened)
  *   add_to_cart                     →   items_added
  *   checkout_step (contact)         →   checkout_started
- *   order_placed                    →   order_created   (id = order number)
+ *   order_placed                    →   order_created   (id = cart/order reference)
  */
 import { state } from '../state.js';
 import { findProduct } from '../catalog.js';
@@ -41,7 +41,12 @@ export function createEventDescriber() {
   const viewedSkus = new Set();
 
   return function describe(event) {
-    const base = { id: event.id, timestamp: event.timestamp, currency: event.currency };
+    const base = {
+      id: event.id,
+      timestamp: event.timestamp,
+      currency: event.currency,
+      cart_id: event.cart_id,
+    };
 
     switch (event.name) {
       case 'page_view':
@@ -88,6 +93,11 @@ export function createEventDescriber() {
 async function sha256(text) {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** Hash a stable, pseudonymous system identifier for OpenAI's external-ID field. */
+export async function hashExternalId(value) {
+  return value ? sha256(String(value).trim()) : undefined;
 }
 
 const normaliseEmail = (email) => email.trim().toLowerCase();

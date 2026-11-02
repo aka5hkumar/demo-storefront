@@ -35,12 +35,13 @@ const PAGES = {
     body: `
       <section><b>What we store on your device</b>
         <code>nm_consent</code> cookie: your cookie choices (180 days).
-        Local storage: your currency and a copy of your cookie choices.
-        Your bag is kept in memory only and clears when you leave.</section>
+        Local storage: your currency, cookie choices, saved bag and cart/order reference.
+        With advertising consent, a random relay session key expires after 30 days without use.</section>
       <section><b>Advertising measurement</b>
         Only with your permission, an advertising partner's pixel and a server
         relay record which ads led to visits and orders. Contact details from
-        checkout are hashed (SHA-256) in your browser before anything is sent.
+        checkout and the cart/order reference are hashed (SHA-256) in your browser
+        before they are sent.
         Change this any time from Cookie settings.</section>
       <section><b>Services this demo calls</b>
         Opening the bag looks up your approximate location from your IP

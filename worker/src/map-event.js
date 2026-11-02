@@ -46,7 +46,7 @@ function mapContents(items = [], currency) {
 }
 
 function mapUser(user = {}, request, browserId) {
-  for (const field of ['emails_sha256', 'phone_numbers_sha256', 'first_names_sha256', 'last_names_sha256']) {
+  for (const field of ['emails_sha256', 'phone_numbers_sha256', 'first_names_sha256', 'last_names_sha256', 'external_ids_sha256']) {
     const values = user[field];
     if (values !== undefined && (!Array.isArray(values) || values.length > 3 || !values.every((v) => SHA256_HEX.test(v)))) {
       throw new InvalidEventError(`${field} must be up to 3 lowercase SHA-256 hex strings`);
@@ -61,6 +61,7 @@ function mapUser(user = {}, request, browserId) {
     phone_numbers_sha256: user.phone_numbers_sha256,
     first_names_sha256: user.first_names_sha256,
     last_names_sha256: user.last_names_sha256,
+    external_ids_sha256: user.external_ids_sha256,
     countries: listOf(user.country && String(user.country).toUpperCase().slice(0, 2)),
     cities: listOf(user.city && String(user.city).slice(0, 128)),
     regions: listOf(user.region && String(user.region).slice(0, 128)),

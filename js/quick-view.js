@@ -6,7 +6,7 @@
  * and sets the URL to #p-{SKU}, so a product can be linked to directly.
  */
 import { $, escapeHtml } from './dom.js';
-import { state } from './state.js';
+import { state, ensureOrderId } from './state.js';
 import { emit, on } from './events.js';
 import { formatPrice } from './currency.js';
 import { CARD_BACKGROUNDS, GENDER_LABELS, productDetails, findProduct } from './catalog.js';
@@ -32,6 +32,7 @@ function quickViewMarkup(product) {
       <span class="product-card__gender">${GENDER_LABELS[product.gender]} · ${product.category}</span>
       <h2 class="display" id="quick-view-title">${escapeHtml(product.name)}</h2>
       <div class="quick-view__price">${formatPrice(product.prices[state.currency], state.currency)}</div>
+      <p class="quick-view__order-reference">Cart / order reference: <code>${escapeHtml(state.orderId)}</code></p>
       <p class="quick-view__description">${details.description}</p>
       ${swatchesMarkup(product)}
       ${sizesMarkup(product)}
@@ -49,6 +50,7 @@ function render() {
 }
 
 export function openQuickView(product, source = 'product_card') {
+  ensureOrderId();
   currentProduct = product;
   render();
 

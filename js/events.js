@@ -8,7 +8,7 @@
  * Every event carries: name, id (dedup key), timestamp and currency.
  * Prices in payloads are integers in the currency's minor unit.
  */
-import { state } from './state.js';
+import { state, ensureOrderId } from './state.js';
 
 const bus = new EventTarget();
 
@@ -19,11 +19,17 @@ function createEventId() {
 
 /** Publish an event. Pass `id` in detail to set a stable dedup key (e.g. an order number). */
 export function emit(name, detail = {}) {
+  // Create the user-visible cart/order reference at the first product content
+  // view, early enough to group subsequent funnel and checkout events.
+  if (name === 'product_viewed') ensureOrderId();
+
+  const cartId = detail.cart_id ?? state.orderId ?? null;
   const event = {
     id: detail.id ?? createEventId(),
     timestamp: Date.now(),
     currency: state.currency,
     ...detail,
+    ...(cartId ? { cart_id: cartId } : {}),
     name, // last, so a detail field can never overwrite the event name
   };
 

@@ -13,14 +13,14 @@
  * - Consent: the SDK starts with consent off unless advertising consent was
  *   already given, and follows consent_changed after that. While consent is
  *   off the SDK sends nothing and keeps no cookies.
- * - Matching: on the purchase, the SDK is re-initialised with the shopper's
- *   hashed details before the order event is measured.
+ * - Matching: events carry the hashed cart reference as an external ID; on a
+ *   purchase, the SDK also receives the shopper's hashed details.
  */
 import { on } from '../events.js';
 import { state } from '../state.js';
 import { getConsent } from '../consent.js';
 import { PIXEL_IDS, PIXEL_SCRIPT_URL, PIXEL_DEBUG } from '../config.js';
-import { createEventDescriber, hashCustomer } from './conversion-events.js';
+import { createEventDescriber, hashCustomer, hashExternalId } from './conversion-events.js';
 
 /**
  * Load the SDK and return a function that sends it a command.
@@ -75,6 +75,7 @@ function pixelUser(hashed) {
     region: hashed.region,
     postal_code: hashed.postcode,
     country: hashed.country,
+    external_id_sha256: hashed.externalId,
   };
   return Object.fromEntries(Object.entries(user).filter(([, value]) => value));
 }
@@ -93,28 +94,36 @@ export function installPixel() {
 
   on('consent_changed', (event) => sdk('consent', event.advertising === true));
 
+  let sendQueue = Promise.resolve();
   on('*', (event) => {
     const description = describe(event);
     if (!description) return;
 
     const measure = () => sdk('measure', description.type, pixelData(description), { event_id: description.id });
-
-    // Matching details only go to the SDK with advertising consent.
-    if (description.type !== 'order_created' || getConsent()?.advertising !== true) {
-      measure();
-      return;
-    }
-
-    // Copy checkout details now (bag.js clears them right after order_placed),
-    // add them to each pixel for matching, then measure the order. With more
-    // than one pixel, OpenAI requires the pixelId on every user update.
     const customerSnapshot = { ...state.customer };
-    hashCustomer(customerSnapshot)
-      .then((hashed) => {
-        const user = pixelUser(hashed);
+    sendQueue = sendQueue.then(async () => {
+      if (getConsent()?.advertising !== true) {
+        measure();
+        return;
+      }
+
+      const userData = {};
+      if (description.cart_id) {
+        userData.externalId = await hashExternalId(description.cart_id);
+      }
+      if (description.type === 'order_created') {
+        Object.assign(userData, await hashCustomer(customerSnapshot));
+      }
+
+      const user = pixelUser(userData);
+      if (Object.keys(user).length) {
+        // With multiple pixels, include the target pixelId on each user update.
         pixelIds.forEach((pixelId) => sdk('init', { pixelId, user }));
-      })
-      .catch(() => { /* measure without matching details */ })
-      .finally(measure);
+      }
+      measure();
+    }).catch(() => {
+      // Tracking must not interrupt the storefront; still send the Pixel event.
+      measure();
+    });
   });
 }
