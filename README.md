@@ -30,6 +30,7 @@ css/
   bag.css                   bag drawer and checkout steps
   dialogs.css               modal panels, quick view, help/shipping/returns content, toast
   consent.css               cookie prompt, floating cookie button, privacy switches
+  membership.css            Motion Club banner and membership dialog
 js/
   main.js                   entry point: wires the modules together
   config.js                 pixel and relay settings (all off by default)
@@ -38,6 +39,7 @@ js/
   catalog.js                colours, garment shapes, sizes, stock, products
   currency.js               price conversion, formatting, shipping, saved currency
   garment.js                draws a product from its SVG masks in any colour
+  membership.js             Motion Club: monthly auto-ship membership (trial or paid), its own dialog
   selection.js              colour and size chosen on each product
   shop.js                   search, sort, filters, grid, pagination
   search.js                 product search (word prefixes + garment synonyms)
@@ -103,6 +105,10 @@ as `[nm] name {payload}`. Prices are integers in minor units with an ISO currenc
 | `currency_changed` | currency picker |
 | `consent_changed` / `consent_reset` | cookie choice saved or reset |
 | `info_viewed` | Help / Shipping / Returns opened |
+| `membership_viewed` | Motion Club dialog opened (once per visit) |
+| `membership_option_selected` | free trial / monthly option switched |
+| `membership_trial_started` | free trial started (`id` = member ID) |
+| `membership_started` | paid membership started (`id` = member ID, first charge) |
 
 Tracking adapters should check `getConsent()` (also `window.nmConsent()`)
 before sending anything.
@@ -119,12 +125,16 @@ ad platform counts each one once:
 | `add_to_cart` | `items_added` |
 | `checkout_step` (contact) | `checkout_started` |
 | `order_placed` | `order_created` (id = order number) |
+| `membership_viewed` | `contents_viewed` (the plan, `content_type: plan`) |
+| `membership_trial_started` | `trial_started` (`plan_enrollment`, `plan_id`) |
+| `membership_started` | `subscription_created` (`plan_enrollment`, `plan_id`, first month's amount) |
 
 - **Browser pixel** (`js/adapters/pixel.js`): add the Pixel IDs to `PIXEL_IDS` in
   `js/config.js` (one or more; every event goes to each). The CSP already allows
   OpenAI's hosts. Consent starts off unless advertising consent was given and
   follows `consent_changed`. On the purchase, the shopper's email, phone and
-  names are SHA-256 hashed in the browser and added for matching.
+  names are SHA-256 hashed in the browser and added for matching; on a Motion
+  Club sign-up, the email is.
 - **Server relay** (`js/adapters/capi-relay.js`): set `CONVERSIONS_RELAY_URL` once
   the Cloudflare Worker is deployed. Sends nothing without advertising consent.
 

@@ -16,7 +16,14 @@ export const FORWARDED_TYPES = new Set([
   'items_added',
   'checkout_started',
   'order_created',
+  'trial_started',
+  'subscription_created',
 ]);
+
+/** Membership events: `plan_enrollment` data (plan_id, optional amount) instead of contents. */
+const PLAN_TYPES = new Set(['trial_started', 'subscription_created']);
+const CONTENT_TYPES = new Set(['product', 'plan']);
+const PLAN_ID = /^[A-Za-z0-9._-]{1,100}$/;
 
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;   // OpenAI rejects events older than 7 days
 const MAX_FUTURE_MS = 10 * 60 * 1000;          // or more than 10 minutes in the future
@@ -37,7 +44,7 @@ function mapContents(items = [], currency) {
     return {
       id: item.sku,
       name: typeof item.name === 'string' ? item.name.slice(0, 200) : undefined,
-      content_type: 'product',
+      content_type: CONTENT_TYPES.has(item.content_type) ? item.content_type : 'product',
       quantity: item.quantity,
       amount: item.unit_price,
       currency,
@@ -99,8 +106,16 @@ export function toConversionEvent(body, request, now = Date.now()) {
     throw new InvalidEventError('page_url must be an absolute URL');
   }
 
-  const data = { type: 'contents' };
-  if (event.items) data.contents = mapContents(event.items, event.currency);
+  let data;
+  if (PLAN_TYPES.has(type)) {
+    if (typeof event.plan_id !== 'string' || !PLAN_ID.test(event.plan_id)) {
+      throw new InvalidEventError('plan_id must be 1-100 letters, digits, dots, dashes or underscores');
+    }
+    data = { type: 'plan_enrollment', plan_id: event.plan_id };
+  } else {
+    data = { type: 'contents' };
+    if (event.items) data.contents = mapContents(event.items, event.currency);
+  }
   if (event.value !== undefined) {
     if (!isPositiveInteger(event.value)) throw new InvalidEventError('event.value must be an integer');
     data.amount = event.value;

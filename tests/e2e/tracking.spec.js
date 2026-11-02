@@ -3,6 +3,7 @@
  * Checks the things that matter for measurement: consent gating, matching
  * event ids across both paths, and matching details only with consent.
  */
+import { createHash } from 'node:crypto';
 import { test, expect, openStore, cards, PIXEL_IDS } from './fixtures.js';
 
 test.use({ tracking: true });
@@ -52,11 +53,18 @@ test('a full purchase: same ids on both paths, matching details on the order', a
   // Every relayed event was also sent by the pixel with the same id.
   for (const body of relayed) expect(pixelIds).toContain(body.event?.id ?? body.id);
 
-  // Each pixel gets the hashed user init (with its pixelId) before order_created, never earlier.
+  // Every user init names its pixel and carries the hashed cart/order reference as external ID.
   const orderMeasure = calls.findIndex(([command, type]) => command === 'measure' && type === 'order_created');
   const userInits = calls.map((call, index) => [call, index]).filter(([[command, options]]) => command === 'init' && options.user);
-  expect(userInits.map(([[, options]]) => options.pixelId)).toEqual(PIXEL_IDS);
-  for (const [[, options], index] of userInits) {
+  const externalId = createHash('sha256').update(order.id).digest('hex');
+  for (const [[, options]] of userInits) {
+    expect(PIXEL_IDS).toContain(options.pixelId);
+    expect(options.user.external_id_sha256).toBe(externalId);
+  }
+  // Hashed contact details only arrive with the order: one init per pixel right before order_created.
+  const withEmail = userInits.filter(([[, options]]) => options.user.email_sha256);
+  expect(withEmail.map(([[, options]]) => options.pixelId)).toEqual(PIXEL_IDS);
+  for (const [[, options], index] of withEmail) {
     expect(index).toBeLessThan(orderMeasure);
     expect(options.user.email_sha256).toMatch(/^[0-9a-f]{64}$/);
   }
@@ -73,4 +81,51 @@ test('after a rejection: no relay calls and no matching details', async ({ page,
   const calls = await sdkCalls(page);
   expect(calls.some(([command, options]) => command === 'init' && options.user)).toBe(false);
   expect(calls.filter(([command]) => command === 'consent').at(-1)).toEqual(['consent', false]);
+});
+
+test('Motion Club: trial and subscription reach the pixel and relay as plan_enrollment', async ({ page, relayed }) => {
+  await openStore(page);
+  await page.locator('#club-banner').click();
+  await page.getByRole('button', { name: 'Start free trial' }).click();
+  await expect(page.locator('#club-body')).toContainText('Your trial is on');
+
+  await page.getByRole('button', { name: 'Back to the shop' }).click();
+  await page.locator('#club-banner').click();
+  await page.locator('input[value="monthly"]').check();
+  await page.locator('#club-form button[type="submit"]').click();
+  await expect(page.locator('#club-body')).toContainText('Welcome to the Club');
+
+  await expect.poll(async () => (await measured(page)).map(([, type]) => type)).toEqual(
+    expect.arrayContaining(['contents_viewed', 'trial_started', 'subscription_created']),
+  );
+  const calls = await sdkCalls(page);
+  const byType = (type) => calls.find(([command, name]) => command === 'measure' && name === type);
+
+  const [, , viewData] = byType('contents_viewed');
+  expect(viewData.contents[0]).toMatchObject({ id: 'motion-club-monthly', content_type: 'plan', amount: 2900 });
+
+  const [, , trialData, trialOptions] = byType('trial_started');
+  expect(trialData).toEqual({ type: 'plan_enrollment', plan_id: 'motion-club-trial-14d' });
+  expect(trialOptions.event_id).toMatch(/^NMC-/);
+
+  const [, , subscriptionData, subscriptionOptions] = byType('subscription_created');
+  expect(subscriptionData).toEqual({ type: 'plan_enrollment', plan_id: 'motion-club-monthly', amount: 2900, currency: 'USD' });
+
+  // Each pixel gets the hashed email and the hashed member ID right before each enrollment event.
+  for (const [type, options] of [['trial_started', trialOptions], ['subscription_created', subscriptionOptions]]) {
+    const measureIndex = calls.findIndex(([command, name]) => command === 'measure' && name === type);
+    const inits = calls.slice(measureIndex - PIXEL_IDS.length, measureIndex);
+    const externalId = createHash('sha256').update(options.event_id).digest('hex');
+    expect(inits.map(([command, init]) => [command, init.pixelId])).toEqual(PIXEL_IDS.map((id) => ['init', id]));
+    for (const [, init] of inits) {
+      expect(init.user.email_sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(init.user.external_id_sha256).toBe(externalId);
+    }
+  }
+
+  // The relay sends the same events with the same ids and the plan_id.
+  await expect.poll(() => relayed.map((body) => body.event?.type)).toEqual(expect.arrayContaining(['trial_started', 'subscription_created']));
+  const relayedTrial = relayed.find((body) => body.event?.type === 'trial_started');
+  expect(relayedTrial.event).toMatchObject({ id: trialOptions.event_id, plan_id: 'motion-club-trial-14d' });
+  expect(relayedTrial.user.emails_sha256[0]).toMatch(/^[0-9a-f]{64}$/);
 });

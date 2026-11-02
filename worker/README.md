@@ -37,6 +37,8 @@ user data.
 | `items_added` | add to bag |
 | `checkout_started` | contact step reached |
 | `order_created` | order placed (`id` = order number; hashed email, phone, names + location) |
+| `trial_started` | Motion Club free trial (`plan_enrollment`, `plan_id`; id = member ID; hashed email) |
+| `subscription_created` | Motion Club paid start (`plan_enrollment`, `plan_id`, first month's amount) |
 
 Click ID (`oppref`) goes on the event; the pixel's browser ID (`__obref` cookie)
 goes in `user.obref`. Purchase PII and external IDs arrive SHA-256 hashed; malformed

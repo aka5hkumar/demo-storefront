@@ -39,9 +39,9 @@ const PAGES = {
         With advertising consent, a random relay session key expires after 30 days without use.</section>
       <section><b>Advertising measurement</b>
         Only with your permission, an advertising partner's pixel and a server
-        relay record which ads led to visits and orders. Contact details from
-        checkout and the cart/order reference are hashed (SHA-256) in your browser
-        before they are sent.
+        relay record which ads led to visits, orders and Motion Club sign-ups.
+        Contact details from checkout, your Motion Club email, and the cart/order
+        or member reference are hashed (SHA-256) in your browser before they are sent.
         Change this any time from Cookie settings.</section>
       <section><b>Services this demo calls</b>
         Opening the bag looks up your approximate location from your IP

@@ -14,7 +14,7 @@ import { on } from '../events.js';
 import { state } from '../state.js';
 import { getConsent } from '../consent.js';
 import { CONVERSIONS_RELAY_URL } from '../config.js';
-import { createEventDescriber, hashCustomer, hashExternalId, clickId } from './conversion-events.js';
+import { createEventDescriber, hashCustomer, hashExternalId, clickId, contactDetailsFor } from './conversion-events.js';
 
 const BROWSER_ID_COOKIE = '__obref'; // set by the browser pixel, when it's installed
 const SESSION_ID_KEY = 'nm-capi-session-id';
@@ -128,8 +128,7 @@ export function installConversionsRelay() {
     const description = describe(event);
     if (!description) return;
 
-    // Copy checkout details now: bag.js clears state.customer right after order_placed.
-    const customerSnapshot = description.type === 'order_created' ? { ...state.customer } : null;
-    relay(description, customerSnapshot);
+    // Copy contact details now: bag.js and membership.js clear them right after the event.
+    relay(description, contactDetailsFor(description));
   });
 }

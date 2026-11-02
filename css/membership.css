@@ -1,0 +1,110 @@
+/* ==========================================================================
+   Motion Club: launch banner and membership dialog
+   ========================================================================== */
+
+/* The scrolling banner is a button: reset button styles, keep the band look. */
+button.marquee {
+  display: block;
+  width: 100%;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.marquee:hover,
+button.marquee:focus-visible {
+  background: var(--terracotta-deep);
+}
+
+/* Pause the scroll while someone points at it or tabs to it. */
+button.marquee:hover .marquee__track,
+button.marquee:focus-visible .marquee__track {
+  animation-play-state: paused;
+}
+
+button.marquee:focus-visible {
+  outline-offset: -4px;
+}
+
+.site-nav__club {
+  font-weight: 700;
+  color: var(--saffron);
+}
+
+.promo__facts {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ----- Dialog ----- */
+
+.club__panel {
+  width: min(560px, 100%);
+}
+
+.club__lead {
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+.club__perks {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding-left: 18px;
+  font-size: 14px;
+}
+
+.club-form {
+  margin-top: 16px;
+}
+
+.club-options {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Override the checkout form's small uppercase field labels. */
+.checkout-form .club-option {
+  display: flex;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--espresso);
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.club-option:has(input:checked) {
+  border-color: var(--espresso);
+  background: var(--line);
+}
+
+.checkout-form .club-option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin-top: 3px;
+  accent-color: var(--terracotta-deep);
+}
+
+.club-option b {
+  display: block;
+  font-size: 15px;
+}
+
+.club-option small {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+}

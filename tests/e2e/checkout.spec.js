@@ -37,8 +37,8 @@ test.describe('with cookies accepted', () => {
     expect(order.items).toHaveLength(1);
     expect((await events.named('checkout_step')).map((event) => event.step)).toEqual(['contact', 'shipping', 'payment']);
 
-    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('nm-bag')));
-    expect(saved.lines).toEqual([]);
+    // An empty bag removes its saved copy.
+    expect(await page.evaluate(() => localStorage.getItem('nm-bag'))).toBeNull();
   });
 
   test('checks the card before placing the order', async ({ page, events }) => {

@@ -14,6 +14,7 @@ import { initBag } from './bag.js';
 import { initShop } from './shop.js';
 import { initHero } from './hero.js';
 import { initQuickView } from './quick-view.js';
+import { initMembership } from './membership.js';
 import { addStructuredData } from './structured-data.js';
 
 function initCurrencyPicker() {
@@ -43,6 +44,7 @@ initShop();
 initHero();
 initCurrencyPicker();
 initQuickView();      // after the shop, so a #p-SKU link can open straight away
+initMembership();     // Motion Club banner + dialog; opens on #club
 addStructuredData();
 
 emit('page_view', { url: location.href });

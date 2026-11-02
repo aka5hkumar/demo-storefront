@@ -223,3 +223,19 @@ const PRODUCTS_BY_SKU = new Map(PRODUCTS.map((product) => [product.sku, product]
 export function findProduct(sku) {
   return PRODUCTS_BY_SKU.get(sku);
 }
+
+/* ----- Motion Club (membership) -----
+   A monthly auto-ship: one new piece from the latest drop, in the member's
+   size. `plan_id` values are sent with the trial and subscription events. */
+
+export const CLUB = {
+  name: 'Motion Club',
+  monthlyPrices: pricesFromUsd(2900),
+  trialDays: 14,
+  plans: {
+    trial:   { planId: 'motion-club-trial-14d', label: 'Free 14-day trial' },
+    monthly: { planId: 'motion-club-monthly',   label: 'Monthly membership' },
+  },
+  focuses: ['Run', 'Train', 'Yoga'],
+  sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+};

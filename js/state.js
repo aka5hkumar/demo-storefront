@@ -32,6 +32,12 @@ export const state = {
    * Kept out of event payloads; future adapters read it to hash for matching.
    */
   customer: {},
+
+  /**
+   * Email entered when joining Motion Club. Like `customer`, kept out of event
+   * payloads; the tracking adapters hash it for the trial/subscription events.
+   */
+  member: {},
 };
 
 /** Create a readable, high-entropy cart/order reference. */

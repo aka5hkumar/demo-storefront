@@ -8,9 +8,12 @@
  *   add_to_cart                     →   items_added
  *   checkout_step (contact)         →   checkout_started
  *   order_placed                    →   order_created   (id = cart/order reference)
+ *   membership_viewed (once)        →   contents_viewed   (the plan, content_type 'plan')
+ *   membership_trial_started        →   trial_started         (plan_enrollment, id = member ID)
+ *   membership_started              →   subscription_created  (plan_enrollment + first charge)
  */
 import { state } from '../state.js';
-import { findProduct } from '../catalog.js';
+import { findProduct, CLUB } from '../catalog.js';
 
 /** Calling codes for the countries the demo shopper can come from. */
 const CALLING_CODES = {
@@ -82,6 +85,25 @@ export function createEventDescriber() {
         return { ...base, type: 'order_created', items, value: event.total };
       }
 
+      case 'membership_viewed':
+        return {
+          ...base,
+          type: 'contents_viewed',
+          items: [{
+            sku: CLUB.plans.monthly.planId,
+            name: CLUB.name,
+            content_type: 'plan',
+            quantity: 1,
+            unit_price: CLUB.monthlyPrices[event.currency],
+          }],
+        };
+
+      case 'membership_trial_started':
+        return { ...base, type: 'trial_started', plan_id: event.plan_id };
+
+      case 'membership_started':
+        return { ...base, type: 'subscription_created', plan_id: event.plan_id, value: event.amount };
+
       default:
         return null;
     }
@@ -89,6 +111,20 @@ export function createEventDescriber() {
 }
 
 /* ----- Matching details (hashed in the browser) ----- */
+
+/** Enrollment events carry plan data (`plan_enrollment`) instead of `contents`. */
+export const PLAN_EVENT_TYPES = new Set(['trial_started', 'subscription_created']);
+
+/**
+ * The contact details to hash for an event, copied at the moment it fires:
+ * checkout details for the order, the Club email for trial/subscription.
+ * Everything else gets none.
+ */
+export function contactDetailsFor(description) {
+  if (description.type === 'order_created') return { ...state.customer };
+  if (PLAN_EVENT_TYPES.has(description.type)) return { ...state.member };
+  return null;
+}
 
 async function sha256(text) {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));

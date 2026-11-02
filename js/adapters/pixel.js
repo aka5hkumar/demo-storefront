@@ -17,10 +17,9 @@
  *   purchase, the SDK also receives the shopper's hashed details.
  */
 import { on } from '../events.js';
-import { state } from '../state.js';
 import { getConsent } from '../consent.js';
 import { PIXEL_IDS, PIXEL_SCRIPT_URL, PIXEL_DEBUG } from '../config.js';
-import { createEventDescriber, hashCustomer, hashExternalId } from './conversion-events.js';
+import { createEventDescriber, hashCustomer, hashExternalId, contactDetailsFor, PLAN_EVENT_TYPES } from './conversion-events.js';
 
 /**
  * Load the SDK and return a function that sends it a command.
@@ -45,13 +44,16 @@ function loadSdk() {
 
 /** Event data in the SDK's "contents" shape (amounts in minor units). */
 function pixelData(description) {
-  const data = { type: 'contents' };
+  // Trial and subscription events use the plan_enrollment shape.
+  const data = PLAN_EVENT_TYPES.has(description.type)
+    ? { type: 'plan_enrollment', plan_id: description.plan_id }
+    : { type: 'contents' };
 
   if (description.items) {
     data.contents = description.items.map((item) => ({
       id: item.sku,
       name: item.name,
-      content_type: 'product',
+      content_type: item.content_type ?? 'product',
       quantity: item.quantity,
       amount: item.unit_price,
       currency: description.currency,
@@ -100,7 +102,7 @@ export function installPixel() {
     if (!description) return;
 
     const measure = () => sdk('measure', description.type, pixelData(description), { event_id: description.id });
-    const customerSnapshot = { ...state.customer };
+    const contactSnapshot = contactDetailsFor(description); // order or Club sign-up only
     sendQueue = sendQueue.then(async () => {
       if (getConsent()?.advertising !== true) {
         measure();
@@ -111,8 +113,8 @@ export function installPixel() {
       if (description.cart_id) {
         userData.externalId = await hashExternalId(description.cart_id);
       }
-      if (description.type === 'order_created') {
-        Object.assign(userData, await hashCustomer(customerSnapshot));
+      if (contactSnapshot) {
+        Object.assign(userData, await hashCustomer(contactSnapshot));
       }
 
       const user = pixelUser(userData);
