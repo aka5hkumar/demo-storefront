@@ -56,6 +56,7 @@ export function formatPrice(minorUnits, currency) {
 }
 
 export function shippingCost(subtotal, currency) {
+  if (subtotal <= 0) return 0; // nothing in the bag, nothing to ship
   if (currency !== 'USD') return 0;
   return subtotal >= FREE_SHIPPING_THRESHOLD_USD ? 0 : US_SHIPPING_FEE;
 }

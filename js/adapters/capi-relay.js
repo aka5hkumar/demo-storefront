@@ -43,6 +43,9 @@ function trackingSessionId() {
   }
 }
 
+/** The Worker clears a session's buffered events at /consent, next to /events. */
+const consentUrl = () => new URL('consent', CONVERSIONS_RELAY_URL).href;
+
 function revokeTrackingSession() {
   let sessionId = fallbackSessionId;
   try {
@@ -54,7 +57,7 @@ function revokeTrackingSession() {
   if (!sessionId) return;
 
   try {
-    fetch(CONVERSIONS_RELAY_URL, {
+    fetch(consentUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId, consent: { advertising: false } }),
@@ -120,9 +123,12 @@ export function installConversionsRelay() {
   const describe = createEventDescriber();
   clickId(); // capture the click ID on the landing page
 
+  // Opting out, or resetting the choice (which clears it), both clear the
+  // session's events still waiting in the Worker's buffer.
   on('consent_changed', (event) => {
     if (event.advertising !== true) revokeTrackingSession();
   });
+  on('consent_reset', revokeTrackingSession);
 
   on('*', (event) => {
     const description = describe(event);

@@ -18,6 +18,10 @@ test('formats in the currency locale', () => {
   assert.match(formatPrice(5400, 'EUR'), /54,00\s?€/);
 });
 
+test('an empty bag has no shipping charge', () => {
+  assert.equal(shippingCost(0, 'USD'), 0);
+});
+
 test('free shipping over the threshold', () => {
   assert.ok(shippingCost(500, 'USD') > 0);
   assert.equal(shippingCost(20000, 'USD'), 0);

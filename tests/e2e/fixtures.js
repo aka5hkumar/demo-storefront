@@ -18,6 +18,7 @@ const BLOCKED_LOOKUPS = /ipwho\.is|get\.geojs\.io|nominatim\.openstreetmap\.org|
 export const PIXEL_IDS = ['px_test_a', 'px_test_b'];
 const SDK_URL = 'https://sdk.test/sdk.js';
 const RELAY_URL = 'https://relay.test/events';
+const RELAY_CONSENT_URL = 'https://relay.test/consent';
 
 const TRACKING_CONFIG = `
 export const PIXEL_IDS = ${JSON.stringify(PIXEL_IDS)};
@@ -40,7 +41,10 @@ export const test = base.extend({
   /** Requests the relay received, parsed. */
   relayed: async ({}, use) => use([]),
 
-  page: async ({ page, tracking, relayed }, use) => {
+  /** Consent withdrawals the relay's /consent endpoint received, parsed. */
+  withdrawals: async ({}, use) => use([]),
+
+  page: async ({ page, tracking, relayed, withdrawals }, use) => {
     const problems = [];
     page.on('pageerror', (error) => problems.push(`page error: ${error.message}`));
     page.on('console', (message) => {
@@ -55,6 +59,14 @@ export const test = base.extend({
     if (tracking) {
       await page.route('**/js/config.js', (route) => route.fulfill({ contentType: 'text/javascript', body: TRACKING_CONFIG }));
       await page.route(SDK_URL, (route) => route.fulfill({ contentType: 'text/javascript', body: FAKE_SDK }));
+      await page.route(RELAY_CONSENT_URL, async (route) => {
+        if (route.request().method() === 'POST') withdrawals.push(JSON.parse(route.request().postData()));
+        await route.fulfill({
+          status: 202,
+          headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'Content-Type' },
+          body: '{"revoked":true}',
+        });
+      });
       await page.route(RELAY_URL, async (route) => {
         if (route.request().method() === 'POST') relayed.push(JSON.parse(route.request().postData()));
         await route.fulfill({

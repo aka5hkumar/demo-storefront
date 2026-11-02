@@ -145,8 +145,8 @@
 
 .hero__ring {
   position: absolute;
-  top: 4%;
-  left: -14%;
+  top: 2%;
+  right: 12%; /* top-right of the sun, clear of the headline at every width */
   width: 22%;
   animation: spin 10s linear infinite;
 }
@@ -255,9 +255,11 @@
     margin-top: 40px;
   }
 
+  /* Top-right, like desktop: the floating cookie button sits bottom-left of the
+     screen, so a left-side ring would scroll underneath it. */
   .hero__ring {
     top: -2%;
-    left: -2%;
+    right: 1%;
     width: 26%;
   }
 

@@ -326,6 +326,18 @@ test('consent withdrawal clears buffered data and rejects in-flight events for t
   assert.equal(upstreamCalls.length, 0);
 });
 
+test('a withdrawal posted to /events also clears the buffer (not a silent "no consent")', async () => {
+  await post(baseBody());
+  const response = await worker.fetch(new Request('https://relay.example/events', {
+    method: 'POST',
+    headers: { Origin: ORIGIN, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: SESSION_ID, consent: { advertising: false } }),
+  }), env);
+  assert.equal(response.status, 202);
+  assert.equal((await response.json()).revoked, true);
+  assert.equal((await sessionBuffer().storage.list()).size, 1); // revocation tombstone only
+});
+
 test('missing pixel credentials fail before buffering', async () => {
   makeEnv({ OPENAI_PIXEL_ID: undefined, OPENAI_CONVERSIONS_API_KEY: undefined });
   const response = await post(baseBody());

@@ -129,3 +129,31 @@ test('Motion Club: trial and subscription reach the pixel and relay as plan_enro
   expect(relayedTrial.event).toMatchObject({ id: trialOptions.event_id, plan_id: 'motion-club-trial-14d' });
   expect(relayedTrial.user.emails_sha256[0]).toMatch(/^[0-9a-f]{64}$/);
 });
+
+test('withdrawing consent asks the relay to clear the session, at /consent', async ({ page, relayed, withdrawals }) => {
+  await openStore(page);
+  await cards(page).first().locator('.product-card__add').click();
+  await expect.poll(() => relayed.length).toBeGreaterThan(0);
+  const sessionId = relayed.at(-1).session_id;
+  expect(sessionId).toBeTruthy();
+
+  // Turn advertising off in the cookie settings.
+  await page.locator('#bag-close').click();
+  await page.locator('#open-cookie-settings').click();
+  await page.locator('#consent-advertising').uncheck({ force: true }); // styled switch over the checkbox
+  await page.locator('#privacy-save').click();
+
+  await expect.poll(() => withdrawals).toContainEqual({ session_id: sessionId, consent: { advertising: false } });
+  expect(await page.evaluate(() => localStorage.getItem('nm-capi-session-id'))).toBeNull();
+});
+
+test('resetting cookie consent also clears the relay session', async ({ page, relayed, withdrawals }) => {
+  await openStore(page);
+  await cards(page).first().locator('.product-card__add').click();
+  await expect.poll(() => relayed.length).toBeGreaterThan(0);
+  const sessionId = relayed.at(-1).session_id;
+
+  await page.locator('#bag-close').click();
+  await page.locator('#reset-consent').click();
+  await expect.poll(() => withdrawals.map((w) => w.session_id)).toContain(sessionId);
+});

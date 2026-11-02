@@ -342,6 +342,7 @@ body.bag-is-open .bag-drawer {
 }
 
 .bag-order-reference code {
+  overflow-wrap: anywhere;
   color: var(--text);
   font-size: 12px;
   user-select: all;

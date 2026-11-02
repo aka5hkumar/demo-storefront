@@ -349,6 +349,20 @@ export class EventBuffer {
 
 /* ----- Handler ----- */
 
+/** `{ session_id, consent: { advertising: false } }` from the browser relay. */
+function isWithdrawal(body) {
+  return body?.consent?.advertising === false
+    && typeof body.session_id === 'string' && body.session_id.length > 0 && body.session_id.length <= 128;
+}
+
+/** Clear a session's buffered events and block in-flight ones (EventBuffer /revoke). */
+async function revokeSession(env, sessionId, cors) {
+  const stub = env.EVENT_BUFFER.get(env.EVENT_BUFFER.idFromName(sessionId));
+  const revoked = await stub.fetch('https://event-buffer/revoke', { method: 'POST' });
+  if (!revoked.ok) return json(502, { error: 'could not clear pending events' }, cors);
+  return json(202, { revoked: true }, cors);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -367,14 +381,10 @@ export default {
     if (url.pathname === '/consent') {
       let body;
       try { body = await request.json(); } catch { return json(400, { error: 'body must be JSON' }, cors); }
-      if (body?.consent?.advertising !== false || typeof body.session_id !== 'string' || body.session_id.length > 128) {
+      if (!isWithdrawal(body)) {
         return json(400, { error: 'a session id and advertising consent withdrawal are required' }, cors);
       }
-      const id = env.EVENT_BUFFER.idFromName(body.session_id);
-      const stub = env.EVENT_BUFFER.get(id);
-      const revoked = await stub.fetch('https://event-buffer/revoke', { method: 'POST' });
-      if (!revoked.ok) return json(502, { error: 'could not clear pending events' }, cors);
-      return json(202, { revoked: true }, cors);
+      return revokeSession(env, body.session_id, cors);
     }
 
     const pixels = configuredPixels(env);
@@ -391,6 +401,10 @@ export default {
     } catch {
       return json(400, { error: 'body must be JSON' }, cors);
     }
+
+    // A withdrawal posted to /events (older pages did this) clears the buffer
+    // too, rather than being quietly accepted as "no consent".
+    if (isWithdrawal(body) && !body.event) return revokeSession(env, body.session_id, cors);
 
     // Consent is enforced here as well as in the browser.
     if (body?.consent?.advertising !== true) {
