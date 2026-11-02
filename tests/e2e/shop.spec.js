@@ -87,3 +87,9 @@ test('sold-out sizes cannot be picked', async ({ page, events }) => {
   await expect(soldOut).not.toHaveAttribute('aria-pressed', 'true');
   expect(await events.names()).toContain('size_unavailable');
 });
+
+test('product names with quote marks stay intact in labels', async ({ page }) => {
+  await page.getByRole('searchbox', { name: 'Search products' }).fill('stride');
+  await expect(page.locator('#result-count')).toContainText('for “stride”');
+  await expect(page.getByRole('button', { name: 'Quick view: Stride 3" Short, Women\'s' })).toHaveCount(1);
+});

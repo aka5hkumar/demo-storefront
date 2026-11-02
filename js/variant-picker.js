@@ -22,7 +22,7 @@ export function swatchesMarkup(product) {
   `).join('');
 
   return `
-    <div class="swatches" role="group" aria-label="Colour">
+    <div class="swatches" role="group" aria-label="Color">
       ${swatches}
       <span class="swatches__label">${COLORS[selected].label}</span>
     </div>`;

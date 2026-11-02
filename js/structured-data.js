@@ -6,7 +6,7 @@
  * Describes the organisation, the website and every product with its price
  * (USD) and stock. Each product links to its quick view (#p-SKU).
  */
-import { PRODUCTS, COLORS, GENDER_LABELS, GARMENT_DETAILS, isInStock } from './catalog.js';
+import { PRODUCTS, COLORS, GENDER_LABELS, productDetails, isInStock } from './catalog.js';
 
 const SITE_URL = 'https://store.akash.app/';
 
@@ -18,7 +18,7 @@ function productData(product) {
     '@id': `${SITE_URL}#p-${product.sku}`,
     sku: product.sku,
     name: `${product.name} (${GENDER_LABELS[product.gender]})`,
-    description: GARMENT_DETAILS[product.garment].description,
+    description: productDetails(product).description,
     image: `${SITE_URL}assets/garments/${product.garment}.svg`,
     brand: { '@type': 'Brand', name: 'Nano Motion' },
     category: product.category,

@@ -139,13 +139,13 @@ function productCardMarkup(product, index) {
   return `
     <article class="product-card" data-sku="${product.sku}" style="animation-delay: ${index * 40}ms">
       <div class="product-card__image" style="background: ${CARD_BACKGROUNDS[product.background]}">
-        <button type="button" class="product-card__view" data-quick-view aria-label="Quick view: ${product.name}, ${GENDER_LABELS[product.gender]}"></button>
+        <button type="button" class="product-card__view" data-quick-view aria-label="Quick view: ${escapeHtml(product.name)}, ${GENDER_LABELS[product.gender]}"></button>
         ${badge}
         ${garmentMarkup(product, selection.color)}
         <button type="button" class="product-card__add" data-add-to-bag data-track="add_to_cart">+ Add</button>
       </div>
       <div class="product-card__title">
-        <h3><button type="button" class="product-card__name" data-quick-view>${product.name}</button></h3>
+        <h3><button type="button" class="product-card__name" data-quick-view>${escapeHtml(product.name)}</button></h3>
         <span class="product-card__gender">${GENDER_LABELS[product.gender]}</span>
       </div>
       <div class="product-card__price">${formatPrice(product.prices[state.currency], state.currency)}</div>

@@ -5,11 +5,11 @@
  * Opening it emits product_viewed (the "viewed content" signal for tracking)
  * and sets the URL to #p-{SKU}, so a product can be linked to directly.
  */
-import { $ } from './dom.js';
+import { $, escapeHtml } from './dom.js';
 import { state } from './state.js';
 import { emit, on } from './events.js';
 import { formatPrice } from './currency.js';
-import { CARD_BACKGROUNDS, GENDER_LABELS, GARMENT_DETAILS, findProduct } from './catalog.js';
+import { CARD_BACKGROUNDS, GENDER_LABELS, productDetails, findProduct } from './catalog.js';
 import { garmentMarkup } from './garment.js';
 import { getSelection } from './selection.js';
 import { swatchesMarkup, sizesMarkup, handleVariantClick, bindSwatchPreview } from './variant-picker.js';
@@ -20,7 +20,7 @@ const HASH_PREFIX = '#p-';
 let currentProduct = null;
 
 function quickViewMarkup(product) {
-  const details = GARMENT_DETAILS[product.garment];
+  const details = productDetails(product);
   const fitRow = details.fit ? `<dt>Fit</dt><dd>${details.fit}</dd>` : '';
 
   return `
@@ -30,14 +30,14 @@ function quickViewMarkup(product) {
     </div>
     <div class="quick-view__info">
       <span class="product-card__gender">${GENDER_LABELS[product.gender]} · ${product.category}</span>
-      <h2 class="display" id="quick-view-title">${product.name}</h2>
+      <h2 class="display" id="quick-view-title">${escapeHtml(product.name)}</h2>
       <div class="quick-view__price">${formatPrice(product.prices[state.currency], state.currency)}</div>
       <p class="quick-view__description">${details.description}</p>
       ${swatchesMarkup(product)}
       ${sizesMarkup(product)}
       <button type="button" class="button button--primary quick-view__add" data-add-to-bag data-track="add_to_cart">Add to bag</button>
       <dl class="quick-view__details">
-        <dt>Fabric</dt><dd>${details.fabric}</dd>
+        <dt>${details.fit ? 'Fabric' : 'Material'}</dt><dd>${details.fabric}</dd>
         ${fitRow}
         <dt>Item</dt><dd>${product.sku}</dd>
       </dl>

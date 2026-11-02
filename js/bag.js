@@ -279,7 +279,7 @@ function bagLineMarkup({ key, product, color, size, quantity }) {
         ${garmentMarkup(product, color)}
       </span>
       <div class="bag-line__info">
-        <b>${product.name}</b>
+        <b>${escapeHtml(product.name)}</b>
         <small>${GENDER_LABELS[product.gender]} · ${COLORS[color].label} · ${size}</small>
         <span class="quantity">
           <button type="button" data-decrease="${key}" aria-label="Remove one">−</button>

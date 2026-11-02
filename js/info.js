@@ -27,7 +27,7 @@ const PAGES = {
     title: 'Returns',
     body: `
       <section><b>30-day returns</b>Unworn items with tags can be returned within 30 days of delivery.</section>
-      <section><b>Free exchanges</b>Swap sizes or colours at no cost, while stock lasts.</section>
+      <section><b>Free exchanges</b>Swap sizes or colors at no cost, while stock lasts.</section>
       <section><b>Refunds</b>Issued to your original payment method within 5 business days of us receiving the return.</section>`,
   },
   privacy: {

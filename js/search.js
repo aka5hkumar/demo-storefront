@@ -27,6 +27,7 @@ const GARMENT_WORDS = {
   'socks':       ['socks'],
   'bottle':      ['bottle', 'water'],
   'mat':         ['mat', 'yoga'],
+  'block':       ['block', 'brick', 'cork', 'yoga', 'prop'],
   'duffel':      ['bag', 'duffel', 'gym'],
 };
 
