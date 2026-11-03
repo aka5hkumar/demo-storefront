@@ -72,3 +72,17 @@ test('the banner shows the price in the chosen currency', async ({ page }) => {
   await page.locator('#currency-picker').selectOption('GBP');
   await expect(page.locator('#club-banner-track')).toContainText('£');
 });
+
+test('each sign-up gets a fresh demo email', async ({ page }) => {
+  await page.locator('#club-banner').click();
+  const email = page.locator('#club-email');
+  await expect(email).not.toHaveValue('');
+  const first = await email.inputValue();
+
+  await page.getByRole('button', { name: 'Start free trial' }).click();
+  await page.getByRole('button', { name: 'Back to the shop' }).click();
+  await page.locator('#club-banner').click();
+
+  await expect(email).not.toHaveValue('');
+  await expect(email).not.toHaveValue(first);
+});

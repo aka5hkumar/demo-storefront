@@ -162,13 +162,16 @@ export function openClub(source = 'banner', preferredOption) {
     emit('membership_viewed', { source });
   }
 
-  if (!demoEmail) {
-    createDemoShopper().then((shopper) => {
-      demoEmail = shopper.email;
-      const field = $('#club-email');
-      if (field && !field.value) field.value = demoEmail;
-    }).catch(() => { /* the shopper can type an email */ });
-  }
+  if (!demoEmail) prepareDemoEmail();
+}
+
+/** Fetch a fresh fake shopper's email and fill the field if it's still empty. */
+function prepareDemoEmail() {
+  createDemoShopper().then((shopper) => {
+    demoEmail = shopper.email;
+    const field = $('#club-email');
+    if (field && !field.value) field.value = demoEmail;
+  }).catch(() => { /* the shopper can type an email */ });
 }
 
 function closeClub() {
@@ -236,6 +239,11 @@ function handleSubmit(event) {
   }
 
   state.member = {}; // the adapters copied what they need when the event fired
+
+  // Each sign-up is a new demo person, like each checkout order.
+  demoEmail = '';
+  prepareDemoEmail();
+
   render();
   $('#club-close').focus();
 }
